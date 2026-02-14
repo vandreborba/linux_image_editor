@@ -8,6 +8,7 @@ import 'package:flutter_painter_v2/flutter_painter.dart';
 import 'package:pasteboard/pasteboard.dart';
 import 'package:crop_your_image/crop_your_image.dart';
 import 'package:window_manager/window_manager.dart';
+import 'package:linux_image_editor/l10n/app_localizations.dart';
 import '../models/editor_tool.dart';
 import '../models/editor_mode.dart';
 import '../widgets/toolbar.dart';
@@ -90,7 +91,7 @@ class _ImageEditorScreenState extends State<ImageEditorScreen> {
         });
       }
     } catch (e) {
-      _showError('Erro ao carregar imagem: $e');
+      _showError(AppLocalizations.of(context)!.errorLoadImage(e.toString()));
     }
   }
 
@@ -159,13 +160,14 @@ class _ImageEditorScreenState extends State<ImageEditorScreen> {
         await _loadImageFromFile(result.files.single.path!);
       }
     } catch (e) {
-      _showError('Erro ao abrir imagem: $e');
+      _showError(AppLocalizations.of(context)!.errorOpenImage(e.toString()));
     }
   }
 
   Future<void> _saveImage({bool saveAs = false}) async {
+    final l10n = AppLocalizations.of(context)!;
     if (_imageData == null) {
-      _showError('Nenhuma imagem para salvar');
+      _showError(l10n.noImageToSave);
       return;
     }
 
@@ -174,8 +176,8 @@ class _ImageEditorScreenState extends State<ImageEditorScreen> {
 
       if (saveAs || savePath == null) {
         final result = await FilePicker.platform.saveFile(
-          dialogTitle: 'Salvar imagem',
-          fileName: 'screenshot_edited.png',
+          dialogTitle: l10n.saveImageDialogTitle,
+          fileName: l10n.defaultEditedFileName,
           type: FileType.image,
         );
 
@@ -189,14 +191,15 @@ class _ImageEditorScreenState extends State<ImageEditorScreen> {
         setState(() {
           _currentFilePath = savePath;
         });
-        _showSuccess('Imagem salva com sucesso!');
+        _showSuccess(l10n.imageSavedSuccess);
       }
     } catch (e) {
-      _showError('Erro ao salvar imagem: $e');
+      _showError(l10n.errorSaveImage(e.toString()));
     }
   }
 
   Future<Uint8List?> _captureImage() async {
+    final l10n = AppLocalizations.of(context)!;
     try {
       // Pequeno delay para garantir que o RepaintBoundary está pronto
       await Future.delayed(const Duration(milliseconds: 100));
@@ -215,24 +218,25 @@ class _ImageEditorScreenState extends State<ImageEditorScreen> {
       final byteData = await image.toByteData(format: ui.ImageByteFormat.png);
       return byteData?.buffer.asUint8List();
     } catch (e) {
-      _showError('Erro ao capturar imagem: $e');
+      _showError(l10n.errorCaptureImage(e.toString()));
       debugPrint('Error capturing image: $e');
       return null;
     }
   }
 
   Future<void> _copyToClipboard() async {
+    final l10n = AppLocalizations.of(context)!;
     try {
       final imageBytes = await _captureImage();
       if (imageBytes == null) {
-        _showError('Não foi possível capturar a imagem');
+        _showError(l10n.errorCaptureImageGeneric);
         return;
       }
 
       await Pasteboard.writeImage(imageBytes);
-      _showSuccess('Imagem copiada para área de transferência!');
+      _showSuccess(l10n.imageCopiedSuccess);
     } catch (e) {
-      _showError('Erro ao copiar: $e');
+      _showError(l10n.errorCopyImage(e.toString()));
       debugPrint('Error copying to clipboard: $e');
     }
   }
@@ -324,15 +328,20 @@ class _ImageEditorScreenState extends State<ImageEditorScreen> {
     });
   }
 
-  void _applyCrop(Uint8List croppedData) async {
-    final uiImage = await _bytesToUiImage(croppedData);
-    setState(() {
-      _imageData = croppedData;
-      _currentImage = uiImage;
-      _painterController.background = uiImage.backgroundDrawable;
-      _mode = EditorMode.draw;
-      _resetZoom();
-    });
+  void _applyCrop(CropResult result) async {
+    switch (result) {
+      case CropSuccess(:final croppedImage):
+        final uiImage = await _bytesToUiImage(croppedImage);
+        setState(() {
+          _imageData = croppedImage;
+          _currentImage = uiImage;
+          _painterController.background = uiImage.backgroundDrawable;
+          _mode = EditorMode.draw;
+          _resetZoom();
+        });
+      case CropFailure():
+        _showError('Could not crop the image');
+    }
   }
 
   void _enterCropMode() {
@@ -355,6 +364,7 @@ class _ImageEditorScreenState extends State<ImageEditorScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Shortcuts(
       shortcuts: <LogicalKeySet, Intent>{
         LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.keyO):
@@ -406,33 +416,33 @@ class _ImageEditorScreenState extends State<ImageEditorScreen> {
               preferredSize: const Size.fromHeight(kToolbarHeight),
               child: DragToMoveArea(
                 child: AppBar(
-                  title: const Text('Simple Print Tool'),
+                  title: Text(l10n.appTitle),
                   actions: [
                     IconButton(
                       icon: const Icon(Icons.folder_open),
                       onPressed: _pickImage,
-                      tooltip: 'Abrir Imagem (Ctrl+O)',
+                      tooltip: l10n.openImageTooltip,
                     ),
                     IconButton(
                       icon: const Icon(Icons.content_paste),
                       onPressed: _loadImageFromClipboard,
-                      tooltip: 'Colar da Área de Transferência (Ctrl+V)',
+                      tooltip: l10n.pasteFromClipboardTooltip,
                     ),
                     if (_imageData != null) ...[
                       IconButton(
                         icon: const Icon(Icons.save),
                         onPressed: () => _saveImage(saveAs: false),
-                        tooltip: 'Salvar (Ctrl+S)',
+                        tooltip: l10n.saveTooltip,
                       ),
                       IconButton(
                         icon: const Icon(Icons.save_as),
                         onPressed: () => _saveImage(saveAs: true),
-                        tooltip: 'Salvar Como (Ctrl+Shift+S)',
+                        tooltip: l10n.saveAsTooltip,
                       ),
                       const SizedBox(width: 8),
                       FilledButton.tonalIcon(
                         icon: const Icon(Icons.content_copy),
-                        label: const Text('Copiar'),
+                        label: Text(l10n.copyButtonLabel),
                         onPressed: _copyToClipboard,
                         style: FilledButton.styleFrom(
                           backgroundColor: Colors.green.withValues(alpha: 0.2),
@@ -446,7 +456,7 @@ class _ImageEditorScreenState extends State<ImageEditorScreen> {
                         onPressed: _painterController.canUndo
                             ? () => _painterController.undo()
                             : null,
-                        tooltip: 'Desfazer (Ctrl+Z)',
+                        tooltip: l10n.undoTooltip,
                       ),
                     ],
                     const SizedBox(width: 8),
@@ -456,7 +466,7 @@ class _ImageEditorScreenState extends State<ImageEditorScreen> {
                       onPressed: () async {
                         await windowManager.close();
                       },
-                      tooltip: 'Fechar',
+                      tooltip: l10n.closeTooltip,
                     ),
                   ],
                 ),
@@ -474,19 +484,22 @@ class _ImageEditorScreenState extends State<ImageEditorScreen> {
                         ),
                         const SizedBox(height: 20),
                         Text(
-                          'Nenhuma imagem carregada',
+                          l10n.noImageLoadedTitle,
                           style: Theme.of(context).textTheme.headlineSmall,
                         ),
                         const SizedBox(height: 10),
-                        const Text(
-                          'Copie um screenshot e ele aparecerá aqui automaticamente',
+                        Text(
+                          l10n.emptyStateHintLine1,
                           textAlign: TextAlign.center,
                         ),
                         const SizedBox(height: 5),
-                        const Text(
-                          'Ou abra uma imagem ou passe um arquivo via linha de comando',
+                        Text(
+                          l10n.emptyStateHintLine2,
                           textAlign: TextAlign.center,
-                          style: TextStyle(fontSize: 12, color: Colors.grey),
+                          style: const TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey,
+                          ),
                         ),
                         const SizedBox(height: 20),
                         Row(
@@ -495,13 +508,13 @@ class _ImageEditorScreenState extends State<ImageEditorScreen> {
                             FilledButton.icon(
                               onPressed: _pickImage,
                               icon: const Icon(Icons.folder_open),
-                              label: const Text('Abrir Imagem'),
+                              label: Text(l10n.openImageButtonLabel),
                             ),
                             const SizedBox(width: 12),
                             OutlinedButton.icon(
                               onPressed: _loadImageFromClipboard,
                               icon: const Icon(Icons.content_paste),
-                              label: const Text('Colar'),
+                              label: Text(l10n.pasteButtonLabel),
                             ),
                           ],
                         ),
@@ -587,7 +600,7 @@ class _ImageEditorScreenState extends State<ImageEditorScreen> {
                                             IconButton(
                                               icon: const Icon(Icons.add),
                                               onPressed: _zoomIn,
-                                              tooltip: 'Aumentar Zoom',
+                                              tooltip: l10n.zoomInTooltip,
                                             ),
                                             Text(
                                               '${(_currentScale * 100).toInt()}%',
@@ -598,13 +611,13 @@ class _ImageEditorScreenState extends State<ImageEditorScreen> {
                                             IconButton(
                                               icon: const Icon(Icons.remove),
                                               onPressed: _zoomOut,
-                                              tooltip: 'Diminuir Zoom',
+                                              tooltip: l10n.zoomOutTooltip,
                                             ),
                                             const Divider(),
                                             IconButton(
                                               icon: const Icon(Icons.refresh),
                                               onPressed: _zoomReset,
-                                              tooltip: 'Resetar Zoom (100%)',
+                                              tooltip: l10n.zoomResetTooltip,
                                             ),
                                           ],
                                         ),
@@ -624,6 +637,7 @@ class _ImageEditorScreenState extends State<ImageEditorScreen> {
   }
 
   Widget _buildCropView() {
+    final l10n = AppLocalizations.of(context)!;
     return Column(
       children: [
         Expanded(
@@ -632,7 +646,6 @@ class _ImageEditorScreenState extends State<ImageEditorScreen> {
             controller: _cropController,
             onCropped: _applyCrop,
             withCircleUi: false,
-            initialSize: 0.8,
             maskColor: Colors.black.withValues(alpha: 0.5),
             cornerDotBuilder: (size, edgeAlignment) {
               return Container(
@@ -657,13 +670,13 @@ class _ImageEditorScreenState extends State<ImageEditorScreen> {
                     _mode = EditorMode.draw;
                   });
                 },
-                child: const Text('Cancelar'),
+                child: Text(l10n.cancelButtonLabel),
               ),
               const SizedBox(width: 16),
               FilledButton.icon(
                 onPressed: () => _cropController.crop(),
                 icon: const Icon(Icons.crop),
-                label: const Text('Aplicar Corte'),
+                label: Text(l10n.applyCropButtonLabel),
               ),
             ],
           ),

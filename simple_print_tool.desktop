@@ -1,5 +1,5 @@
 [Desktop Entry]
-Name=Simple Print Tool
+Name=Linux Image Editor
 GenericName=Image Editor
 Comment=Editor de imagens simples para screenshots
 Exec=/usr/local/bin/simple_print_tool %f

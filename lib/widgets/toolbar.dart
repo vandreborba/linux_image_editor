@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:linux_image_editor/l10n/app_localizations.dart';
 import '../models/editor_tool.dart';
 
 class EditorToolbar extends StatelessWidget {
@@ -23,6 +24,7 @@ class EditorToolbar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Container(
       width: 72,
       decoration: BoxDecoration(
@@ -42,7 +44,7 @@ class EditorToolbar extends StatelessWidget {
             context,
             icon: Icons.near_me,
             tool: EditorTool.none,
-            tooltip: 'Selecionar',
+            tooltip: l10n.toolSelectTooltip,
           ),
           const SizedBox(height: 4),
           const Divider(height: 1),
@@ -51,42 +53,42 @@ class EditorToolbar extends StatelessWidget {
             context,
             icon: Icons.brush,
             tool: EditorTool.brush,
-            tooltip: 'Pincel',
+            tooltip: l10n.toolBrushTooltip,
           ),
           const SizedBox(height: 4),
           _buildToolButton(
             context,
             icon: Icons.highlight,
             tool: EditorTool.highlighter,
-            tooltip: 'Marca-texto',
+            tooltip: l10n.toolHighlighterTooltip,
           ),
           const SizedBox(height: 4),
           _buildToolButton(
             context,
             icon: Icons.arrow_forward,
             tool: EditorTool.arrow,
-            tooltip: 'Seta',
+            tooltip: l10n.toolArrowTooltip,
           ),
           const SizedBox(height: 4),
           _buildToolButton(
             context,
             icon: Icons.rectangle_outlined,
             tool: EditorTool.rectangle,
-            tooltip: 'Retângulo',
+            tooltip: l10n.toolRectangleTooltip,
           ),
           const SizedBox(height: 4),
           _buildToolButton(
             context,
             icon: Icons.text_fields,
             tool: EditorTool.text,
-            tooltip: 'Texto',
+            tooltip: l10n.toolTextTooltip,
           ),
           const SizedBox(height: 4),
           _buildToolButton(
             context,
             icon: Icons.cleaning_services,
             tool: EditorTool.eraser,
-            tooltip: 'Borracha',
+            tooltip: l10n.toolEraserTooltip,
           ),
           const SizedBox(height: 8),
           const Divider(height: 1),
@@ -141,6 +143,7 @@ class EditorToolbar extends StatelessWidget {
   }
 
   Widget _buildCropButton(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 8),
       child: Container(
@@ -151,7 +154,7 @@ class EditorToolbar extends StatelessWidget {
         child: IconButton(
           icon: const Icon(Icons.crop),
           onPressed: onCropPressed,
-          tooltip: 'Cortar',
+          tooltip: l10n.cropTooltip,
           color: Theme.of(context).colorScheme.onSurface,
           iconSize: 24,
         ),
@@ -160,12 +163,13 @@ class EditorToolbar extends StatelessWidget {
   }
 
   Widget _buildColorPicker(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 8),
       child: PopupMenuButton<Color>(
         initialValue: selectedColor,
         onSelected: onColorChanged,
-        tooltip: 'Cor',
+        tooltip: l10n.colorTooltip,
         child: Container(
           width: 56,
           height: 56,
@@ -247,6 +251,7 @@ class EditorToolbar extends StatelessWidget {
   }
 
   Widget _buildStrokeWidthPicker(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 8),
       child: GestureDetector(
@@ -254,7 +259,7 @@ class EditorToolbar extends StatelessWidget {
           _showStrokeWidthPicker(context);
         },
         child: Tooltip(
-          message: 'Espessura: ${strokeWidth.toInt()}px',
+          message: l10n.strokeWidthTooltip(strokeWidth.toInt()),
           child: Container(
             width: 56,
             height: 56,
@@ -290,6 +295,7 @@ class EditorToolbar extends StatelessWidget {
   }
 
   void _showStrokeWidthPicker(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     double localStrokeWidth = strokeWidth;
 
     showDialog(
@@ -305,7 +311,7 @@ class EditorToolbar extends StatelessWidget {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
-                      'Espessura',
+                      l10n.strokeWidthTitle,
                       style: Theme.of(context).textTheme.titleMedium,
                     ),
                     const SizedBox(height: 20),
@@ -341,7 +347,7 @@ class EditorToolbar extends StatelessWidget {
                     const SizedBox(height: 20),
                     FilledButton(
                       onPressed: () => Navigator.pop(context),
-                      child: const Text('OK'),
+                      child: Text(l10n.okButtonLabel),
                     ),
                   ],
                 ),

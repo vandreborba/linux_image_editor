@@ -1,12 +1,12 @@
 #!/bin/bash
 
-# Script para empacotar o Simple Print Tool para distribuição
+# Script para empacotar o Linux Image Editor para distribuição
 # Execute: bash package.sh
 
 set -e
 
 echo "========================================="
-echo "   Empacotando Simple Print Tool"
+echo "   Empacotando Linux Image Editor"
 echo "========================================="
 echo ""
 
@@ -46,7 +46,7 @@ cp "$SCRIPT_DIR/README.md" "$PACKAGE_DIR/"
 # Cria README de instalação simplificado
 cat > "$PACKAGE_DIR/INSTALL.txt" <<'EOF'
 ========================================
-SIMPLE PRINT TOOL - INSTALAÇÃO
+Linux Image Editor - INSTALAÇÃO
 ========================================
 
 REQUISITOS:
@@ -69,11 +69,11 @@ INSTALAÇÃO:
 5. Pronto! Execute com:
    simple-print-tool
    
-   Ou procure "Simple Print Tool" no menu de aplicativos
+   Ou procure "Linux Image Editor" no menu de aplicativos
 
 COMO USAR:
 - Tire um screenshot (Print Screen)
-- Abra o Simple Print Tool
+- Abra o Linux Image Editor
 - A imagem será colada automaticamente
 - Edite e salve (Ctrl+S)
 

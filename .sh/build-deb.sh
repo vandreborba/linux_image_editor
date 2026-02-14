@@ -13,12 +13,12 @@ BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
 # Informações do pacote
-APP_NAME="linux_image_editor"
+APP_NAME="linux-image-editor"
 APP_DISPLAY_NAME="Linux Image Editor"
-APP_VERSION="1.0.0"
+APP_VERSION="1.1.0"
 APP_DESCRIPTION="Editor de imagens rápido para Linux"
-APP_MAINTAINER="Vandre <vandre@example.com>"
-APP_HOMEPAGE="https://github.com/vandre/linux-image-editor"
+APP_MAINTAINER="Vandre Borba <vandre@example.com>"
+APP_HOMEPAGE="https://github.com/vandreborba/linux_image_editor"
 
 # Diretórios
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && cd .. && pwd)"
@@ -78,12 +78,12 @@ fi
 
 # Cria script para definir como aplicativo padrão
 echo -e "${YELLOW}  → Criando script set-default.sh...${NC}"
-cat > "$DEB_PKG_DIR/opt/$APP_NAME/set-default.sh" <<'SETDEFAULT'
+cat > "$DEB_PKG_DIR/opt/$APP_NAME/set-default.sh" <<EOF
 #!/bin/bash
 
 # Script para configurar Linux Image Editor como aplicativo padrão para imagens
 
-DESKTOP_FILE="linux_image_editor.desktop"
+DESKTOP_FILE="$APP_NAME.desktop"
 
 echo "========================================"
 echo "  Configurando aplicativo padrão"
@@ -114,7 +114,7 @@ echo ""
 echo "Você pode verificar com:"
 echo "  xdg-mime query default image/png"
 echo ""
-SETDEFAULT
+EOF
 
 chmod +x "$DEB_PKG_DIR/opt/$APP_NAME/set-default.sh"
 
@@ -134,15 +134,21 @@ Description: $APP_DESCRIPTION
 Homepage: $APP_HOMEPAGE
 EOF
 
+# Verifica se o arquivo control foi criado
+if [ ! -f "$DEB_PKG_DIR/DEBIAN/control" ]; then
+    echo -e "${RED}❌ Erro ao criar arquivo de controle!${NC}"
+    exit 1
+fi
+
 # Cria script de pós-instalação
 echo -e "${YELLOW}  → Criando scripts de instalação...${NC}"
-cat > "$DEB_PKG_DIR/DEBIAN/postinst" <<'EOF'
+cat > "$DEB_PKG_DIR/DEBIAN/postinst" <<EOF
 #!/bin/bash
 set -e
 
 # Cria link simbólico
-if [ ! -L /usr/local/bin/linux_image_editor ]; then
-    ln -sf /opt/linux_image_editor/linux_image_editor /usr/local/bin/linux_image_editor
+if [ ! -L /usr/local/bin/$APP_NAME ]; then
+    ln -sf /opt/$APP_NAME/$APP_NAME /usr/local/bin/$APP_NAME
 fi
 
 # Atualiza cache de aplicativos
@@ -157,11 +163,11 @@ fi
 
 echo ""
 echo "✓ Linux Image Editor instalado com sucesso!"
-echo "  Execute com: linux_image_editor"
+echo "  Execute com: $APP_NAME"
 echo ""
 echo "Para definir como aplicativo padrão para imagens:"
-echo "  linux_image_editor --set-default"
-echo "  ou execute: bash /opt/linux_image_editor/set-default.sh"
+echo "  $APP_NAME --set-default"
+echo "  ou execute: bash /opt/$APP_NAME/set-default.sh"
 echo ""
 
 exit 0
@@ -170,13 +176,13 @@ EOF
 chmod +x "$DEB_PKG_DIR/DEBIAN/postinst"
 
 # Cria script de remoção
-cat > "$DEB_PKG_DIR/DEBIAN/prerm" <<'EOF'
+cat > "$DEB_PKG_DIR/DEBIAN/prerm" <<EOF
 #!/bin/bash
 set -e
 
 # Remove link simbólico
-if [ -L /usr/local/bin/linux_image_editor ]; then
-    rm -f /usr/local/bin/linux_image_editor
+if [ -L /usr/local/bin/$APP_NAME ]; then
+    rm -f /usr/local/bin/$APP_NAME
 fi
 
 exit 0
@@ -202,10 +208,15 @@ StartupWMClass=$APP_NAME
 Keywords=image;photo;picture;edit;editor;viewer;
 EOF
 
-# Cria ícone (placeholder - você pode substituir por um ícone real)
-echo -e "${YELLOW}  → Criando ícone...${NC}"
-# Cria um ícone SVG simples como placeholder
-cat > "$DEB_PKG_DIR/usr/share/pixmaps/$APP_NAME.svg" <<'EOF'
+# Copia ícone do aplicativo
+echo -e "${YELLOW}  → Copiando ícone...${NC}"
+if [ -f "$SCRIPT_DIR/assets/icons/Icone2.png" ]; then
+    cp "$SCRIPT_DIR/assets/icons/Icone2.png" "$DEB_PKG_DIR/usr/share/pixmaps/$APP_NAME.png"
+    echo -e "${GREEN}    ✓ Ícone copiado${NC}"
+else
+    echo -e "${YELLOW}    ⚠ Ícone não encontrado, criando placeholder${NC}"
+    # Cria um ícone SVG simples como placeholder
+    cat > "$DEB_PKG_DIR/usr/share/pixmaps/$APP_NAME.svg" <<'EOF'
 <?xml version="1.0" encoding="UTF-8"?>
 <svg width="64" height="64" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
   <rect width="64" height="64" rx="8" fill="#4A90E2"/>
@@ -215,24 +226,49 @@ cat > "$DEB_PKG_DIR/usr/share/pixmaps/$APP_NAME.svg" <<'EOF'
   <path d="M44 48 L52 48 M48 44 L48 52" stroke="white" stroke-width="2" stroke-linecap="round"/>
 </svg>
 EOF
+fi
 
 # Define permissões corretas
 echo -e "${YELLOW}  → Configurando permissões...${NC}"
-chmod +x "$DEB_PKG_DIR/opt/$APP_NAME/$APP_NAME"
+# Permissões de diretórios
 find "$DEB_PKG_DIR" -type d -exec chmod 755 {} \;
-find "$DEB_PKG_DIR" -type f -exec chmod 644 {} \;
+# Permissões de arquivos (exceto DEBIAN)
+find "$DEB_PKG_DIR/opt" -type f -exec chmod 644 {} \;
+find "$DEB_PKG_DIR/usr" -type f -exec chmod 644 {} \;
+# Executáveis
 chmod +x "$DEB_PKG_DIR/opt/$APP_NAME/$APP_NAME"
-chmod +x "$DEB_PKG_DIR/DEBIAN/postinst"
-chmod +x "$DEB_PKG_DIR/DEBIAN/prerm"
+chmod +x "$DEB_PKG_DIR/opt/$APP_NAME/set-default.sh"
+# Permissões DEBIAN
+chmod 755 "$DEB_PKG_DIR/DEBIAN"
+chmod 644 "$DEB_PKG_DIR/DEBIAN/control"
+chmod 755 "$DEB_PKG_DIR/DEBIAN/postinst"
+chmod 755 "$DEB_PKG_DIR/DEBIAN/prerm"
 
 # Constrói o pacote .deb
 echo -e "${YELLOW}🔧 Construindo pacote .deb...${NC}"
+
+# Verificação final
+if [ ! -f "$DEB_PKG_DIR/DEBIAN/control" ]; then
+    echo -e "${RED}❌ Erro: Arquivo control não encontrado!${NC}"
+    exit 1
+fi
+
 cd "$DEB_DIR"
 dpkg-deb --build --root-owner-group "${APP_NAME}_${APP_VERSION}_amd64"
 
 # Verifica se o pacote foi criado
 DEB_FILE="$DEB_DIR/${APP_NAME}_${APP_VERSION}_amd64.deb"
 if [ -f "$DEB_FILE" ]; then
+    # Copia o set-default.sh para a mesma pasta do .deb
+    echo -e "${YELLOW}  → Copiando set-default.sh...${NC}"
+    if [ -f "$SCRIPT_DIR/.sh/set-default.sh" ]; then
+        cp "$SCRIPT_DIR/.sh/set-default.sh" "$DEB_DIR/"
+        chmod +x "$DEB_DIR/set-default.sh"
+        echo -e "${GREEN}    ✓ set-default.sh copiado${NC}"
+    else
+        echo -e "${YELLOW}    ⚠ .sh/set-default.sh não encontrado${NC}"
+    fi
+    
     echo ""
     echo -e "${GREEN}=========================================${NC}"
     echo -e "${GREEN}   ✓ Pacote .deb criado com sucesso!${NC}"
@@ -252,6 +288,11 @@ if [ -f "$DEB_FILE" ]; then
     # Informações do pacote
     echo -e "${BLUE}Informações do pacote:${NC}"
     dpkg-deb --info "$DEB_FILE"
+    
+    # Abre a pasta do .deb no gerenciador de arquivos
+    echo ""
+    echo -e "${YELLOW}Abrindo pasta do pacote...${NC}"
+    xdg-open "$DEB_DIR" 2>/dev/null || true
 else
     echo -e "${RED}❌ Erro ao criar pacote .deb${NC}"
     exit 1

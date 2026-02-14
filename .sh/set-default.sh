@@ -3,7 +3,7 @@
 # Script para configurar Linux Image Editor como aplicativo padrão para imagens
 # Uso: bash .sh/set-default.sh
 
-DESKTOP_FILE="linux_image_editor.desktop"
+DESKTOP_FILE="linux-image-editor.desktop"
 
 echo "========================================"
 echo "  Linux Image Editor - Configuração"
@@ -16,7 +16,9 @@ if [ ! -f "/usr/share/applications/$DESKTOP_FILE" ]; then
     echo ""
     echo "Instale primeiro com:"
     echo "  bash .sh/build-deb.sh"
-    echo "  sudo dpkg -i build/deb/linux_image_editor_*.deb"
+    echo "  sudo dpkg -i build/deb/linux-image-editor_*.deb"
+    echo ""
+    read -p "Pressione Enter para fechar..."
     exit 1
 fi
 
@@ -59,3 +61,4 @@ echo ""
 echo "Para reverter, use o gerenciador de aplicativos do seu sistema"
 echo "ou execute: xdg-mime default <outro-app>.desktop image/png"
 echo ""
+read -p "Pressione Enter para fechar..."

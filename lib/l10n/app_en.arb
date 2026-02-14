@@ -1,0 +1,73 @@
+{
+  "appTitle": "Linux Image Editor",
+  "openImageTooltip": "Open image (Ctrl+O)",
+  "pasteFromClipboardTooltip": "Paste from clipboard (Ctrl+V)",
+  "saveTooltip": "Save (Ctrl+S)",
+  "saveAsTooltip": "Save As (Ctrl+Shift+S)",
+  "copyButtonLabel": "Copy",
+  "undoTooltip": "Undo (Ctrl+Z)",
+  "closeTooltip": "Close",
+  "noImageLoadedTitle": "No image loaded",
+  "emptyStateHintLine1": "Copy a screenshot and it will appear here automatically",
+  "emptyStateHintLine2": "Or open an image or pass a file via command line",
+  "openImageButtonLabel": "Open Image",
+  "pasteButtonLabel": "Paste",
+  "zoomInTooltip": "Zoom in",
+  "zoomOutTooltip": "Zoom out",
+  "zoomResetTooltip": "Reset zoom (100%)",
+  "cancelButtonLabel": "Cancel",
+  "applyCropButtonLabel": "Apply Crop",
+  "saveImageDialogTitle": "Save image",
+  "defaultEditedFileName": "screenshot_edited.png",
+  "noImageToSave": "No image to save",
+  "imageSavedSuccess": "Image saved successfully!",
+  "imageCopiedSuccess": "Image copied to clipboard!",
+  "errorLoadImage": "Failed to load image: {error}",
+  "@errorLoadImage": {
+    "placeholders": {
+      "error": {}
+    }
+  },
+  "errorOpenImage": "Failed to open image: {error}",
+  "@errorOpenImage": {
+    "placeholders": {
+      "error": {}
+    }
+  },
+  "errorSaveImage": "Failed to save image: {error}",
+  "@errorSaveImage": {
+    "placeholders": {
+      "error": {}
+    }
+  },
+  "errorCaptureImage": "Failed to capture image: {error}",
+  "@errorCaptureImage": {
+    "placeholders": {
+      "error": {}
+    }
+  },
+  "errorCaptureImageGeneric": "Could not capture the image",
+  "errorCopyImage": "Failed to copy image: {error}",
+  "@errorCopyImage": {
+    "placeholders": {
+      "error": {}
+    }
+  },
+  "toolSelectTooltip": "Select",
+  "toolBrushTooltip": "Brush",
+  "toolHighlighterTooltip": "Highlighter",
+  "toolArrowTooltip": "Arrow",
+  "toolRectangleTooltip": "Rectangle",
+  "toolTextTooltip": "Text",
+  "toolEraserTooltip": "Eraser",
+  "cropTooltip": "Crop",
+  "colorTooltip": "Color",
+  "strokeWidthTooltip": "Stroke width: {value}px",
+  "@strokeWidthTooltip": {
+    "placeholders": {
+      "value": {}
+    }
+  },
+  "strokeWidthTitle": "Stroke width",
+  "okButtonLabel": "OK"
+}

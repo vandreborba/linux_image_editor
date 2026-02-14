@@ -1,12 +1,12 @@
 #!/bin/bash
 
-# Script de instalação do Simple Print Tool
+# Script de instalação do Linux Image Editor
 # Execute com: sudo bash install.sh
 
 set -e
 
 echo "========================================="
-echo "   Simple Print Tool - Instalação"
+echo "   Linux Image Editor - Instalação"
 echo "========================================="
 echo ""
 
@@ -61,7 +61,7 @@ USER_HOME=$(eval echo ~$REAL_USER)
 echo "🖥️  Instalando atalho do menu..."
 cat > "$USER_HOME/.local/share/applications/simple_print_tool.desktop" <<EOF
 [Desktop Entry]
-Name=Simple Print Tool
+Name=Linux Image Editor
 GenericName=Image Editor
 Comment=Editor de imagens simples para screenshots
 Exec=/usr/local/bin/simple-print-tool %f

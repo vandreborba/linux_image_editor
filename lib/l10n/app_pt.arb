@@ -1,0 +1,73 @@
+{
+  "appTitle": "Linux Image Editor",
+  "openImageTooltip": "Abrir imagem (Ctrl+O)",
+  "pasteFromClipboardTooltip": "Colar da area de transferencia (Ctrl+V)",
+  "saveTooltip": "Salvar (Ctrl+S)",
+  "saveAsTooltip": "Salvar como (Ctrl+Shift+S)",
+  "copyButtonLabel": "Copiar",
+  "undoTooltip": "Desfazer (Ctrl+Z)",
+  "closeTooltip": "Fechar",
+  "noImageLoadedTitle": "Nenhuma imagem carregada",
+  "emptyStateHintLine1": "Copie um screenshot e ele aparecera aqui automaticamente",
+  "emptyStateHintLine2": "Ou abra uma imagem ou passe um arquivo via linha de comando",
+  "openImageButtonLabel": "Abrir imagem",
+  "pasteButtonLabel": "Colar",
+  "zoomInTooltip": "Aumentar zoom",
+  "zoomOutTooltip": "Diminuir zoom",
+  "zoomResetTooltip": "Resetar zoom (100%)",
+  "cancelButtonLabel": "Cancelar",
+  "applyCropButtonLabel": "Aplicar corte",
+  "saveImageDialogTitle": "Salvar imagem",
+  "defaultEditedFileName": "screenshot_editado.png",
+  "noImageToSave": "Nenhuma imagem para salvar",
+  "imageSavedSuccess": "Imagem salva com sucesso!",
+  "imageCopiedSuccess": "Imagem copiada para a area de transferencia!",
+  "errorLoadImage": "Erro ao carregar imagem: {error}",
+  "@errorLoadImage": {
+    "placeholders": {
+      "error": {}
+    }
+  },
+  "errorOpenImage": "Erro ao abrir imagem: {error}",
+  "@errorOpenImage": {
+    "placeholders": {
+      "error": {}
+    }
+  },
+  "errorSaveImage": "Erro ao salvar imagem: {error}",
+  "@errorSaveImage": {
+    "placeholders": {
+      "error": {}
+    }
+  },
+  "errorCaptureImage": "Erro ao capturar imagem: {error}",
+  "@errorCaptureImage": {
+    "placeholders": {
+      "error": {}
+    }
+  },
+  "errorCaptureImageGeneric": "Nao foi possivel capturar a imagem",
+  "errorCopyImage": "Erro ao copiar imagem: {error}",
+  "@errorCopyImage": {
+    "placeholders": {
+      "error": {}
+    }
+  },
+  "toolSelectTooltip": "Selecionar",
+  "toolBrushTooltip": "Pincel",
+  "toolHighlighterTooltip": "Marca-texto",
+  "toolArrowTooltip": "Seta",
+  "toolRectangleTooltip": "Retangulo",
+  "toolTextTooltip": "Texto",
+  "toolEraserTooltip": "Borracha",
+  "cropTooltip": "Cortar",
+  "colorTooltip": "Cor",
+  "strokeWidthTooltip": "Espessura: {value}px",
+  "@strokeWidthTooltip": {
+    "placeholders": {
+      "value": {}
+    }
+  },
+  "strokeWidthTitle": "Espessura",
+  "okButtonLabel": "OK"
+}
