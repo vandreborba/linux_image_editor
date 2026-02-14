@@ -1,0 +1,1 @@
+enum EditorMode { draw, crop }
