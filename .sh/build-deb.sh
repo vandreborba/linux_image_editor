@@ -15,7 +15,7 @@ NC='\033[0m' # No Color
 # Informações do pacote
 APP_NAME="linux-image-editor"
 APP_DISPLAY_NAME="Linux Image Editor"
-APP_VERSION="1.1.0"
+APP_VERSION="1.2.0"
 APP_DESCRIPTION="Editor de imagens rápido para Linux"
 APP_MAINTAINER="Vandre Borba <vandre@example.com>"
 APP_HOMEPAGE="https://github.com/vandreborba/linux_image_editor"
@@ -46,16 +46,9 @@ echo -e "${YELLOW}🔨 Compilando aplicativo Flutter...${NC}"
 flutter build linux --release
 
 # Verifica se a compilação foi bem-sucedida
-if [ ! -f "$BUILD_DIR/linux/x64/release/bundle/${APP_NAME}" ] && [ ! -f "$BUILD_DIR/linux/x64/release/bundle/simple_print_tool" ]; then
+if [ ! -f "$BUILD_DIR/linux/x64/release/bundle/linux-image-editor" ]; then
     echo -e "${RED}❌ Erro: Executável não encontrado!${NC}"
     exit 1
-fi
-
-# Detecta o nome do executável
-if [ -f "$BUILD_DIR/linux/x64/release/bundle/simple_print_tool" ]; then
-    EXEC_NAME="simple_print_tool"
-else
-    EXEC_NAME="${APP_NAME}"
 fi
 
 echo -e "${YELLOW}📦 Criando estrutura do pacote .deb...${NC}"
@@ -70,11 +63,6 @@ mkdir -p "$DEB_PKG_DIR/usr/local/bin"
 # Copia o bundle completo
 echo -e "${YELLOW}  → Copiando arquivos do aplicativo...${NC}"
 cp -r "$BUILD_DIR/linux/x64/release/bundle"/* "$DEB_PKG_DIR/opt/$APP_NAME/"
-
-# Renomeia o executável se necessário
-if [ "$EXEC_NAME" != "$APP_NAME" ]; then
-    mv "$DEB_PKG_DIR/opt/$APP_NAME/$EXEC_NAME" "$DEB_PKG_DIR/opt/$APP_NAME/$APP_NAME"
-fi
 
 # Cria script para definir como aplicativo padrão
 echo -e "${YELLOW}  → Criando script set-default.sh...${NC}"

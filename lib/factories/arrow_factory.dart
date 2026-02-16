@@ -2,6 +2,7 @@ import 'dart:math';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_painter_v2/flutter_painter.dart';
+import 'package:flutter_painter_v2/src/controllers/drawables/sized1ddrawable.dart';
 import '../models/arrow_style.dart';
 
 /// Fábrica de setas personalizada com diferentes estilos
@@ -22,26 +23,35 @@ class StyledArrowFactory extends ShapeFactory<StyledArrowDrawable> {
 }
 
 /// Seta estilizada que pode ser desenhada em diferentes estilos
-class StyledArrowDrawable extends ObjectDrawable implements ShapeDrawable {
+class StyledArrowDrawable extends Sized1DDrawable implements ShapeDrawable {
   @override
   Paint paint;
 
   final ArrowStyle style;
 
-  final double length;
-
   StyledArrowDrawable({
     Paint? paint,
     required this.style,
-    required this.length,
-    required super.position,
-    super.rotationAngle = 0,
-    super.scale = 1,
-    super.assists = const <ObjectDrawableAssist>{},
-    super.assistPaints = const <ObjectDrawableAssist, Paint>{},
-    super.locked = false,
-    super.hidden = false,
-  }) : paint = paint ?? ShapeDrawable.defaultPaint;
+    required double length,
+    required Offset position,
+    double rotationAngle = 0,
+    double scale = 1,
+    Set<ObjectDrawableAssist> assists = const <ObjectDrawableAssist>{},
+    Map<ObjectDrawableAssist, Paint> assistPaints =
+        const <ObjectDrawableAssist, Paint>{},
+    bool locked = false,
+    bool hidden = false,
+  })  : paint = paint ?? ShapeDrawable.defaultPaint,
+        super(
+          length: length,
+          position: position,
+          rotationAngle: rotationAngle,
+          scale: scale,
+          assists: assists,
+          assistPaints: assistPaints,
+          locked: locked,
+          hidden: hidden,
+        );
 
   @protected
   EdgeInsets get padding {
@@ -214,16 +224,6 @@ class StyledArrowDrawable extends ObjectDrawable implements ShapeDrawable {
       paint: paint ?? this.paint,
       locked: locked ?? this.locked,
       style: style ?? this.style,
-    );
-  }
-
-  @override
-  Size getSize({double minWidth = 0.0, double maxWidth = double.infinity}) {
-    final config = style.config;
-    final headSize = paint.strokeWidth * config.arrowHeadSizeMultiplier;
-    return Size(
-      length * scale + paint.strokeWidth,
-      paint.strokeWidth + headSize,
     );
   }
 }

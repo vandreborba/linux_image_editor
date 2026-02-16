@@ -1,7 +1,8 @@
 # Linux Image Editor
 
-Simple image editor for quick, basic edits after a screenshot.
-Editor simples para edicao basica logo após um print screen.
+A lightweight and fast image editor for Linux with drawing tools (brush, highlighter, arrows, shapes), text annotations, crop, resize, and file navigation. Perfect for quick edits after screenshots with keyboard shortcuts support.
+
+Editor de imagens leve e rápido para Linux com ferramentas de desenho (pincel, marca-texto, setas, formas), anotações de texto, corte, redimensionamento e navegação de arquivos. Perfeito para edições rápidas após print screens com suporte a atalhos de teclado.
 
 ![Flutter](https://img.shields.io/badge/Flutter-Linux-blue)
 ![License](https://img.shields.io/badge/License-GPLv3-blue.svg)
@@ -10,7 +11,9 @@ Editor simples para edicao basica logo após um print screen.
 
 ## English
 
-A small Linux app focused on fast edits right after taking a screenshot.
+![Linux Image Editor Screenshot](assets/screenshot/Screenshot1.png)
+
+A feature-rich image editor designed for quick edits. Load images from file or clipboard, annotate with various tools, crop, resize, and save your work—all with intuitive keyboard shortcuts.
 
 ### Download Pre-built Package
 
@@ -35,14 +38,10 @@ sudo apt install xclip
 After installing, run the included script to set Linux Image Editor as the default application for opening images:
 
 ```bash
-bash /opt/linux-image-editor/set-default.sh
+/opt/linux-image-editor/set-default.sh
 ```
 
-Or run directly:
-
-```bash
-linux-image-editor --set-default
-```
+This script configures all common image MIME types (PNG, JPEG, GIF, BMP, WebP) to open with Linux Image Editor by default.
 
 ---
 
@@ -91,7 +90,9 @@ GPL-3.0. See LICENSE.
 
 ## Português
 
-Um app pequeno para Linux, pensado para editar rapidamente depois de um print screen.
+![Linux Image Editor Screenshot](assets/screenshot/Screenshot1.png)
+
+Um editor de imagens completo projetado para edições rápidas. Carregue imagens de arquivos ou da área de transferência, anote com várias ferramentas, corte, redimensione e salve seu trabalho—tudo com atalhos de teclado intuitivos.
 
 ### Baixar Pacote Pré-compilado
 
@@ -116,14 +117,10 @@ sudo apt install xclip
 Após instalar, execute o script incluído para definir o Linux Image Editor como aplicativo padrão para abrir imagens:
 
 ```bash
-bash /opt/linux-image-editor/set-default.sh
+/opt/linux-image-editor/set-default.sh
 ```
 
-Ou execute diretamente:
-
-```bash
-linux-image-editor --set-default
-```
+Este script configura todos os tipos MIME de imagens comuns (PNG, JPEG, GIF, BMP, WebP) para abrir com o Linux Image Editor por padrão.
 
 ---
 

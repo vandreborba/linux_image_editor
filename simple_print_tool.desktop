@@ -2,8 +2,8 @@
 Name=Linux Image Editor
 GenericName=Image Editor
 Comment=Editor de imagens simples para screenshots
-Exec=/usr/local/bin/simple_print_tool %f
-Icon=simple_print_tool
+Exec=/usr/local/bin/linux-image-editor %f
+Icon=linux-image-editor
 Terminal=false
 Type=Application
 Categories=Graphics;2DGraphics;RasterGraphics;
