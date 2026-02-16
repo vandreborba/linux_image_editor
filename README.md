@@ -59,7 +59,10 @@ This will:
 - Clean previous builds
 - Compile the Flutter app
 - Create a .deb package in `build/deb/`
+- Copy the .deb and set-default.sh to `release/` folder
 - Automatically open the folder when done
+
+The compiled package will be available in the `release/` folder, ready for distribution or GitHub releases.
 
 #### Development
 
@@ -138,7 +141,10 @@ Isso vai:
 - Limpar builds anteriores
 - Compilar o app Flutter
 - Criar um pacote .deb em `build/deb/`
+- Copiar o .deb e set-default.sh para a pasta `release/`
 - Abrir a pasta automaticamente ao finalizar
+
+O pacote compilado ficará disponível na pasta `release/`, pronto para distribuição ou GitHub releases.
 
 #### Desenvolvimento
 

@@ -277,6 +277,18 @@ if [ -f "$DEB_FILE" ]; then
     echo -e "${BLUE}Informações do pacote:${NC}"
     dpkg-deb --info "$DEB_FILE"
     
+    # Copia para pasta release (para versionamento e GitHub releases)
+    echo ""
+    echo -e "${YELLOW}📦 Copiando para pasta release...${NC}"
+    RELEASE_DIR="$SCRIPT_DIR/release"
+    mkdir -p "$RELEASE_DIR"
+    cp "$DEB_FILE" "$RELEASE_DIR/"
+    cp "$DEB_DIR/set-default.sh" "$RELEASE_DIR/" 2>/dev/null || cp "$SCRIPT_DIR/.sh/set-default.sh" "$RELEASE_DIR/" 2>/dev/null || true
+    chmod +x "$RELEASE_DIR/set-default.sh" 2>/dev/null || true
+    echo -e "${GREEN}✓ Arquivos copiados para release/${NC}"
+    echo -e "  ${BLUE}→ $(basename "$DEB_FILE")${NC}"
+    echo -e "  ${BLUE}→ set-default.sh${NC}"
+    
     # Abre a pasta do .deb no gerenciador de arquivos
     echo ""
     echo -e "${YELLOW}Abrindo pasta do pacote...${NC}"
