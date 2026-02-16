@@ -15,7 +15,7 @@ NC='\033[0m' # No Color
 # Informações do pacote
 APP_NAME="linux-image-editor"
 APP_DISPLAY_NAME="Linux Image Editor"
-APP_VERSION="1.2.0"
+APP_VERSION="1.2.1"
 APP_DESCRIPTION="Editor de imagens rápido para Linux"
 APP_MAINTAINER="Vandre Borba <vandre@example.com>"
 APP_HOMEPAGE="https://github.com/vandreborba/linux_image_editor"
