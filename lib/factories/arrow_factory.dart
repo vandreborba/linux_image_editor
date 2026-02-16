@@ -41,17 +41,17 @@ class StyledArrowDrawable extends Sized1DDrawable implements ShapeDrawable {
         const <ObjectDrawableAssist, Paint>{},
     bool locked = false,
     bool hidden = false,
-  })  : paint = paint ?? ShapeDrawable.defaultPaint,
-        super(
-          length: length,
-          position: position,
-          rotationAngle: rotationAngle,
-          scale: scale,
-          assists: assists,
-          assistPaints: assistPaints,
-          locked: locked,
-          hidden: hidden,
-        );
+  }) : paint = paint ?? ShapeDrawable.defaultPaint,
+       super(
+         length: length,
+         position: position,
+         rotationAngle: rotationAngle,
+         scale: scale,
+         assists: assists,
+         assistPaints: assistPaints,
+         locked: locked,
+         hidden: hidden,
+       );
 
   @protected
   EdgeInsets get padding {
