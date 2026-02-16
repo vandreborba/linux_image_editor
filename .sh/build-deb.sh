@@ -126,7 +126,7 @@ Version: $APP_VERSION
 Section: graphics
 Priority: optional
 Architecture: amd64
-Depends: libgtk-3-0, libglib2.0-0, libc6
+Depends: libgtk-3-0, libglib2.0-0, libc6, xclip
 Maintainer: $APP_MAINTAINER
 Description: $APP_DESCRIPTION
  Editor de imagens simples e rápido desenvolvido em Flutter.

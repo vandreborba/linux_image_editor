@@ -10,6 +10,7 @@ class EditorToolbar extends StatelessWidget {
   final Function(Color) onColorChanged;
   final Function(double) onStrokeWidthChanged;
   final VoidCallback onCropPressed;
+  final VoidCallback onResizePressed;
 
   const EditorToolbar({
     super.key,
@@ -20,6 +21,7 @@ class EditorToolbar extends StatelessWidget {
     required this.onColorChanged,
     required this.onStrokeWidthChanged,
     required this.onCropPressed,
+    required this.onResizePressed,
   });
 
   @override
@@ -93,6 +95,8 @@ class EditorToolbar extends StatelessWidget {
           const SizedBox(height: 8),
           const Divider(height: 1),
           const SizedBox(height: 8),
+          _buildResizeButton(context),
+          const SizedBox(height: 4),
           _buildCropButton(context),
           const Spacer(),
           // Controles de cor e espessura
@@ -136,6 +140,26 @@ class EditorToolbar extends StatelessWidget {
           color: isSelected
               ? Theme.of(context).colorScheme.onPrimaryContainer
               : Theme.of(context).colorScheme.onSurface,
+          iconSize: 24,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildResizeButton(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 8),
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(12),
+          color: Colors.transparent,
+        ),
+        child: IconButton(
+          icon: const Icon(Icons.photo_size_select_large),
+          onPressed: onResizePressed,
+          tooltip: l10n.resizeTooltip,
+          color: Theme.of(context).colorScheme.onSurface,
           iconSize: 24,
         ),
       ),

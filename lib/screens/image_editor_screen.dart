@@ -1,3 +1,5 @@
+// ignore_for_file: use_build_context_synchronously
+
 import 'dart:io';
 import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
@@ -7,11 +9,20 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter_painter_v2/flutter_painter.dart';
 import 'package:pasteboard/pasteboard.dart';
 import 'package:crop_your_image/crop_your_image.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:window_manager/window_manager.dart';
+import 'package:image/image.dart' as img;
 import 'package:linux_image_editor/l10n/app_localizations.dart';
 import '../models/editor_tool.dart';
 import '../models/editor_mode.dart';
+import '../models/arrow_style.dart';
+import '../models/text_style_type.dart';
+import '../models/file_sort_type.dart';
+import '../factories/arrow_factory.dart';
+import '../drawables/rounded_box_text_drawable.dart';
 import '../widgets/toolbar.dart';
+import '../widgets/text_input_dialog.dart';
+import '../widgets/resize_dialog.dart';
 
 class ImageEditorScreen extends StatefulWidget {
   final String? initialFilePath;
@@ -36,6 +47,25 @@ class _ImageEditorScreenState extends State<ImageEditorScreen> {
       TransformationController();
   double _currentScale = 1.0;
   ui.Image? _currentImage;
+  ArrowStyle _arrowStyle = ArrowStyle.standard;
+  bool _showArrowStyleSelector = false;
+
+  // Variáveis para navegação entre arquivos
+  List<String> _filesInDirectory = [];
+  int _currentFileIndex = -1;
+  FileSortType _fileSortType = FileSortType.name;
+
+  // Variáveis para pan com botão direito do mouse
+  bool _isRightMouseButtonDown = false;
+  Offset? _lastPanPosition;
+
+  // Variáveis para cursor customizado da borracha
+  Offset? _mousePosition;
+  bool _isMouseOverCanvas = false;
+
+  // Variável para aspect ratio no crop
+  double? _selectedAspectRatio;
+  Rect? _fixedCropSize;
 
   @override
   void initState() {
@@ -89,9 +119,13 @@ class _ImageEditorScreenState extends State<ImageEditorScreen> {
           _painterController.background = uiImage.backgroundDrawable;
           _resetZoom();
         });
+        // Atualiza a lista de arquivos na pasta
+        await _updateFilesInDirectory(path);
       }
     } catch (e) {
-      _showError(AppLocalizations.of(context)!.errorLoadImage(e.toString()));
+      if (mounted) {
+        _showError(AppLocalizations.of(context)!.errorLoadImage(e.toString()));
+      }
     }
   }
 
@@ -113,6 +147,9 @@ class _ImageEditorScreenState extends State<ImageEditorScreen> {
           _currentImage = uiImage;
           _painterController.background = uiImage.backgroundDrawable;
           _resetZoom();
+          // Limpa a lista de arquivos quando carrega da área de transferência
+          _filesInDirectory = [];
+          _currentFileIndex = -1;
         });
       }
     } catch (e) {
@@ -120,6 +157,102 @@ class _ImageEditorScreenState extends State<ImageEditorScreen> {
       // (pode não haver imagem ou não ter permissão)
       debugPrint('Não foi possível ler imagem da área de transferência: $e');
     }
+  }
+
+  Future<void> _updateFilesInDirectory(String filePath) async {
+    try {
+      final file = File(filePath);
+      final directory = file.parent;
+
+      // Lista todos os arquivos de imagem na pasta
+      final imageExtensions = [
+        '.png',
+        '.jpg',
+        '.jpeg',
+        '.gif',
+        '.bmp',
+        '.webp',
+      ];
+      final files = directory
+          .listSync()
+          .whereType<File>()
+          .where(
+            (f) => imageExtensions.any(
+              (ext) => f.path.toLowerCase().endsWith(ext),
+            ),
+          )
+          .toList();
+
+      // Ordena os arquivos
+      _sortFiles(files);
+
+      setState(() {
+        _filesInDirectory = files.map((f) => f.path).toList();
+        _currentFileIndex = _filesInDirectory.indexOf(filePath);
+      });
+    } catch (e) {
+      debugPrint('Erro ao listar arquivos do diretório: $e');
+    }
+  }
+
+  void _sortFiles(List<File> files) {
+    switch (_fileSortType) {
+      case FileSortType.name:
+        files.sort(
+          (a, b) => a.path.toLowerCase().compareTo(b.path.toLowerCase()),
+        );
+        break;
+      case FileSortType.date:
+        files.sort((a, b) {
+          final aStat = a.statSync();
+          final bStat = b.statSync();
+          return bStat.modified.compareTo(
+            aStat.modified,
+          ); // Mais recente primeiro
+        });
+        break;
+    }
+  }
+
+  Future<void> _changeSortType(FileSortType newType) async {
+    setState(() {
+      _fileSortType = newType;
+    });
+    // Reordena a lista se houver arquivos carregados
+    if (_currentFilePath != null) {
+      await _updateFilesInDirectory(_currentFilePath!);
+    }
+  }
+
+  void _navigateToFile(int direction) {
+    if (_filesInDirectory.isEmpty || _currentFileIndex == -1) return;
+
+    final newIndex = _currentFileIndex + direction;
+    if (newIndex >= 0 && newIndex < _filesInDirectory.length) {
+      _loadImageFromFile(_filesInDirectory[newIndex]);
+    }
+  }
+
+  bool get _canNavigatePrevious =>
+      _filesInDirectory.isNotEmpty && _currentFileIndex > 0;
+
+  bool get _canNavigateNext =>
+      _filesInDirectory.isNotEmpty &&
+      _currentFileIndex < _filesInDirectory.length - 1;
+
+  String? get _currentFileName {
+    if (_filesInDirectory.isEmpty || _currentFileIndex == -1) return null;
+    return _filesInDirectory[_currentFileIndex].split('/').last;
+  }
+
+  String? get _previousFileName {
+    if (!_canNavigatePrevious) return null;
+    return _filesInDirectory[_currentFileIndex - 1].split('/').last;
+  }
+
+  String? get _nextFileName {
+    if (!_canNavigateNext) return null;
+    return _filesInDirectory[_currentFileIndex + 1].split('/').last;
   }
 
   void _resetZoom() {
@@ -130,16 +263,22 @@ class _ImageEditorScreenState extends State<ImageEditorScreen> {
   void _zoomIn() {
     setState(() {
       _currentScale = (_currentScale * 1.2).clamp(0.1, 4.0);
-      _transformationController.value = Matrix4.identity()
-        ..scale(_currentScale);
+      _transformationController.value = Matrix4.diagonal3Values(
+        _currentScale,
+        _currentScale,
+        1.0,
+      );
     });
   }
 
   void _zoomOut() {
     setState(() {
       _currentScale = (_currentScale / 1.2).clamp(0.1, 4.0);
-      _transformationController.value = Matrix4.identity()
-        ..scale(_currentScale);
+      _transformationController.value = Matrix4.diagonal3Values(
+        _currentScale,
+        _currentScale,
+        1.0,
+      );
     });
   }
 
@@ -160,7 +299,9 @@ class _ImageEditorScreenState extends State<ImageEditorScreen> {
         await _loadImageFromFile(result.files.single.path!);
       }
     } catch (e) {
-      _showError(AppLocalizations.of(context)!.errorOpenImage(e.toString()));
+      if (mounted) {
+        _showError(AppLocalizations.of(context)!.errorOpenImage(e.toString()));
+      }
     }
   }
 
@@ -233,8 +374,50 @@ class _ImageEditorScreenState extends State<ImageEditorScreen> {
         return;
       }
 
-      await Pasteboard.writeImage(imageBytes);
-      _showSuccess(l10n.imageCopiedSuccess);
+      // No Linux, usar xclip para copiar imagens
+      if (Platform.isLinux) {
+        // Salvar a imagem em um arquivo temporário
+        final tempDir = await getTemporaryDirectory();
+        final tempFile = File('${tempDir.path}/clipboard_image.png');
+        await tempFile.writeAsBytes(imageBytes);
+
+        // Usar xclip para copiar a imagem
+        try {
+          final result = await Process.run('xclip', [
+            '-selection',
+            'clipboard',
+            '-t',
+            'image/png',
+            '-i',
+            tempFile.path,
+          ]);
+
+          if (result.exitCode == 0) {
+            _showSuccess(l10n.imageCopiedSuccess);
+          } else {
+            throw Exception('xclip failed: ${result.stderr}');
+          }
+        } catch (e) {
+          if (e.toString().contains('No such file or directory')) {
+            _showError(
+              'xclip não está instalado. Por favor, instale com: sudo apt install xclip',
+            );
+          } else {
+            rethrow;
+          }
+        } finally {
+          // Limpar o arquivo temporário
+          Future.delayed(const Duration(seconds: 1), () {
+            if (tempFile.existsSync()) {
+              tempFile.delete();
+            }
+          });
+        }
+      } else {
+        // Em outras plataformas, usar Pasteboard
+        await Pasteboard.writeImage(imageBytes);
+        _showSuccess(l10n.imageCopiedSuccess);
+      }
     } catch (e) {
       _showError(l10n.errorCopyImage(e.toString()));
       debugPrint('Error copying to clipboard: $e');
@@ -251,6 +434,7 @@ class _ImageEditorScreenState extends State<ImageEditorScreen> {
           _painterController.shapeFactory = null;
           _painterController.freeStyleColor = _selectedColor;
           _painterController.freeStyleStrokeWidth = _strokeWidth;
+          _showArrowStyleSelector = false;
           break;
 
         case EditorTool.highlighter:
@@ -260,32 +444,39 @@ class _ImageEditorScreenState extends State<ImageEditorScreen> {
             alpha: 0.4,
           );
           _painterController.freeStyleStrokeWidth = _strokeWidth * 3;
+          _showArrowStyleSelector = false;
           break;
 
         case EditorTool.arrow:
           _painterController.freeStyleMode = FreeStyleMode.none;
-          _painterController.shapeFactory = ArrowFactory();
+          _painterController.shapeFactory = StyledArrowFactory(_arrowStyle);
+          _showArrowStyleSelector = true;
           break;
 
         case EditorTool.rectangle:
           _painterController.freeStyleMode = FreeStyleMode.none;
           _painterController.shapeFactory = RectangleFactory();
+          _showArrowStyleSelector = false;
           break;
 
         case EditorTool.text:
           _painterController.freeStyleMode = FreeStyleMode.none;
           _painterController.shapeFactory = null;
-          _painterController.addText();
+          _showArrowStyleSelector = false;
+          _showTextInputDialog();
           break;
 
         case EditorTool.eraser:
           _painterController.freeStyleMode = FreeStyleMode.erase;
           _painterController.shapeFactory = null;
+          _painterController.freeStyleStrokeWidth = _strokeWidth;
+          _showArrowStyleSelector = false;
           break;
 
         case EditorTool.none:
           _painterController.freeStyleMode = FreeStyleMode.none;
           _painterController.shapeFactory = null;
+          _showArrowStyleSelector = false;
           break;
       }
     });
@@ -316,6 +507,8 @@ class _ImageEditorScreenState extends State<ImageEditorScreen> {
       _painterController.freeStyleStrokeWidth = strokeWidth * 3;
     } else if (tool == EditorTool.brush) {
       _painterController.freeStyleStrokeWidth = strokeWidth;
+    } else if (tool == EditorTool.eraser) {
+      _painterController.freeStyleStrokeWidth = strokeWidth;
     }
   }
 
@@ -328,15 +521,142 @@ class _ImageEditorScreenState extends State<ImageEditorScreen> {
     });
   }
 
+  void _updateArrowStyle(ArrowStyle style) {
+    setState(() {
+      _arrowStyle = style;
+      // Se a ferramenta seta estiver selecionada, reaplica a factory com o novo estilo
+      if (_selectedTool == EditorTool.arrow) {
+        _painterController.shapeFactory = StyledArrowFactory(style);
+      }
+      // Fecha o seletor após escolher o estilo
+      _showArrowStyleSelector = false;
+    });
+  }
+
+  void _clearAllEdits() {
+    setState(() {
+      // Remove todos os drawables do controller, mantendo apenas o background
+      if (_currentImage != null) {
+        // Descarta o controller antigo
+        _painterController.dispose();
+
+        // Cria um novo controller limpo
+        _painterController = PainterController(
+          settings: PainterSettings(
+            freeStyle: FreeStyleSettings(
+              color: _selectedColor,
+              strokeWidth: _strokeWidth,
+            ),
+            shape: ShapeSettings(
+              paint: Paint()
+                ..color = _selectedColor
+                ..strokeWidth = _strokeWidth
+                ..style = PaintingStyle.stroke,
+            ),
+            text: TextSettings(
+              textStyle: TextStyle(color: _selectedColor, fontSize: 24),
+            ),
+          ),
+        );
+        _painterController.background = _currentImage!.backgroundDrawable;
+        // Reaplica a ferramenta atual
+        _updateTool(_selectedTool);
+      }
+    });
+  }
+
+  Future<void> _showTextInputDialog() async {
+    final textConfig = await showDialog<TextConfig>(
+      context: context,
+      builder: (BuildContext context) {
+        return TextInputDialog(currentColor: _selectedColor);
+      },
+    );
+
+    if (textConfig != null && mounted) {
+      // Atualiza o estilo de texto no controller com base na configuração
+      final styleConfig = textConfig.styleType.config;
+
+      // Calcula a posição central do canvas para adicionar o texto
+      final renderBox = context.findRenderObject() as RenderBox?;
+      final centerPosition = renderBox != null
+          ? Offset(renderBox.size.width / 2, renderBox.size.height / 2)
+          : const Offset(200, 200);
+
+      // Cria o drawable apropriado baseado no estilo
+      if (textConfig.styleType == TextStyleType.roundedBox) {
+        // Usa drawable customizado para caixa arredondada
+        final roundedBoxDrawable = RoundedBoxTextDrawable(
+          text: textConfig.text,
+          position: centerPosition,
+          backgroundColor: textConfig.color.withValues(alpha: 0.7),
+          padding: styleConfig.backgroundPadding,
+          borderRadius: styleConfig.borderRadius,
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: textConfig.fontSize,
+            fontWeight: FontWeight.w500,
+          ),
+        );
+        _painterController.addDrawables([roundedBoxDrawable]);
+      } else {
+        // Usa TextDrawable padrão para texto simples ou com sombra
+        TextStyle textStyle = TextStyle(
+          color: textConfig.color,
+          fontSize: textConfig.fontSize,
+          fontWeight: FontWeight.w500,
+        );
+
+        // Adiciona sombra se necessário
+        if (styleConfig.hasShadow) {
+          textStyle = textStyle.copyWith(
+            shadows: [
+              Shadow(
+                offset: styleConfig.shadowOffset,
+                blurRadius: styleConfig.shadowBlurRadius,
+                color: styleConfig.shadowColor,
+              ),
+            ],
+          );
+        }
+
+        final textDrawable = TextDrawable(
+          text: textConfig.text,
+          position: centerPosition,
+          style: textStyle,
+        );
+
+        _painterController.addDrawables([textDrawable]);
+      }
+    }
+  }
+
   void _applyCrop(CropResult result) async {
     switch (result) {
       case CropSuccess(:final croppedImage):
-        final uiImage = await _bytesToUiImage(croppedImage);
+        var finalImage = croppedImage;
+
+        // Se há um tamanho fixo definido, redimensiona para as dimensões exatas
+        if (_fixedCropSize != null) {
+          final image = img.decodeImage(croppedImage);
+          if (image != null) {
+            final resized = img.copyResize(
+              image,
+              width: _fixedCropSize!.width.toInt(),
+              height: _fixedCropSize!.height.toInt(),
+              interpolation: img.Interpolation.linear,
+            );
+            finalImage = Uint8List.fromList(img.encodePng(resized));
+          }
+        }
+
+        final uiImage = await _bytesToUiImage(finalImage);
         setState(() {
-          _imageData = croppedImage;
+          _imageData = finalImage;
           _currentImage = uiImage;
           _painterController.background = uiImage.backgroundDrawable;
           _mode = EditorMode.draw;
+          _fixedCropSize = null; // Reset após aplicar
           _resetZoom();
         });
       case CropFailure():
@@ -348,6 +668,63 @@ class _ImageEditorScreenState extends State<ImageEditorScreen> {
     setState(() {
       _mode = EditorMode.crop;
     });
+  }
+
+  Future<void> _showResizeDialog() async {
+    if (_currentImage == null) return;
+
+    final result = await showDialog<Map<String, int>>(
+      context: context,
+      builder: (context) => ResizeDialog(
+        currentWidth: _currentImage!.width,
+        currentHeight: _currentImage!.height,
+      ),
+    );
+
+    if (result != null) {
+      await _applyResize(result['width']!, result['height']!);
+    }
+  }
+
+  Future<void> _applyResize(int newWidth, int newHeight) async {
+    final l10n = AppLocalizations.of(context)!;
+
+    if (_imageData == null) return;
+
+    try {
+      // Decodifica a imagem
+      final image = img.decodeImage(_imageData!);
+      if (image == null) {
+        _showError(l10n.errorResizeImage);
+        return;
+      }
+
+      // Redimensiona a imagem
+      final resized = img.copyResize(
+        image,
+        width: newWidth,
+        height: newHeight,
+        interpolation: img.Interpolation.linear,
+      );
+
+      // Codifica de volta para PNG
+      final resizedBytes = Uint8List.fromList(img.encodePng(resized));
+
+      // Converte para ui.Image
+      final uiImage = await _bytesToUiImage(resizedBytes);
+
+      // Atualiza o estado
+      setState(() {
+        _imageData = resizedBytes;
+        _currentImage = uiImage;
+        _painterController.background = uiImage.backgroundDrawable;
+        _resetZoom();
+      });
+
+      _showSuccess(l10n.imageResizedSuccess);
+    } catch (e) {
+      _showError(l10n.errorResizeImage);
+    }
   }
 
   void _showError(String message) {
@@ -382,6 +759,7 @@ class _ImageEditorScreenState extends State<ImageEditorScreen> {
             const _CopyImageIntent(),
         LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.keyZ):
             const _UndoIntent(),
+        LogicalKeySet(LogicalKeyboardKey.delete): const _DeleteDrawableIntent(),
       },
       child: Actions(
         actions: <Type, Action<Intent>>{
@@ -408,16 +786,179 @@ class _ImageEditorScreenState extends State<ImageEditorScreen> {
               return null;
             },
           ),
+          _DeleteDrawableIntent: CallbackAction<_DeleteDrawableIntent>(
+            onInvoke: (_) {
+              // Verifica se há um drawable selecionado
+              if (_painterController.selectedObjectDrawable != null) {
+                // Armazena referência antes de remover
+                final selectedDrawable =
+                    _painterController.selectedObjectDrawable!;
+                // Remove o drawable (newAction: true permite desfazer)
+                _painterController.removeDrawable(
+                  selectedDrawable,
+                  newAction: true,
+                );
+                // Desseleciona (isRemoved: true envia evento de limpeza)
+                _painterController.deselectObjectDrawable(isRemoved: true);
+              }
+              return null;
+            },
+          ),
         },
         child: Focus(
           autofocus: true,
+          onKeyEvent: (node, event) {
+            // Captura a tecla Delete diretamente
+            if (event is KeyDownEvent &&
+                event.logicalKey == LogicalKeyboardKey.delete) {
+              if (_painterController.selectedObjectDrawable != null) {
+                final selectedDrawable =
+                    _painterController.selectedObjectDrawable!;
+                _painterController.removeDrawable(
+                  selectedDrawable,
+                  newAction: true,
+                );
+                _painterController.deselectObjectDrawable(isRemoved: true);
+                return KeyEventResult.handled;
+              }
+            }
+            return KeyEventResult.ignored;
+          },
           child: Scaffold(
             appBar: PreferredSize(
               preferredSize: const Size.fromHeight(kToolbarHeight),
               child: DragToMoveArea(
                 child: AppBar(
-                  title: Text(l10n.appTitle),
+                  title: _currentFileName != null
+                      ? Text(_currentFileName!)
+                      : Text(l10n.appTitle),
                   actions: [
+                    // Controles de navegação entre arquivos
+                    if (_filesInDirectory.isNotEmpty) ...[
+                      IconButton(
+                        icon: const Icon(Icons.chevron_left),
+                        onPressed: _canNavigatePrevious
+                            ? () => _navigateToFile(-1)
+                            : null,
+                        tooltip: _previousFileName != null
+                            ? l10n.previousFileWithName(_previousFileName!)
+                            : l10n.previousFileTooltip,
+                      ),
+                      // Indicador de posição e menu dropdown
+                      PopupMenuButton<int>(
+                        icon: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              '${_currentFileIndex + 1} / ${_filesInDirectory.length}',
+                              style: const TextStyle(fontSize: 13),
+                            ),
+                            const SizedBox(width: 4),
+                            const Icon(Icons.arrow_drop_down, size: 20),
+                          ],
+                        ),
+                        tooltip: l10n.fileNavigationTooltip,
+                        itemBuilder: (context) {
+                          return List.generate(_filesInDirectory.length, (
+                            index,
+                          ) {
+                            final fileName = _filesInDirectory[index]
+                                .split('/')
+                                .last;
+                            final isCurrentFile = index == _currentFileIndex;
+                            return PopupMenuItem<int>(
+                              value: index,
+                              child: Row(
+                                children: [
+                                  if (isCurrentFile)
+                                    Icon(
+                                      Icons.check,
+                                      size: 18,
+                                      color: Theme.of(
+                                        context,
+                                      ).colorScheme.primary,
+                                    )
+                                  else
+                                    const SizedBox(width: 18),
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: Text(
+                                      fileName,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: TextStyle(
+                                        fontWeight: isCurrentFile
+                                            ? FontWeight.bold
+                                            : FontWeight.normal,
+                                        color: isCurrentFile
+                                            ? Theme.of(
+                                                context,
+                                              ).colorScheme.primary
+                                            : null,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            );
+                          });
+                        },
+                        onSelected: (index) {
+                          if (index != _currentFileIndex) {
+                            _loadImageFromFile(_filesInDirectory[index]);
+                          }
+                        },
+                      ),
+                      PopupMenuButton<FileSortType>(
+                        icon: const Icon(Icons.sort),
+                        tooltip: l10n.sortByTooltip,
+                        initialValue: _fileSortType,
+                        onSelected: _changeSortType,
+                        itemBuilder: (context) => [
+                          PopupMenuItem(
+                            value: FileSortType.name,
+                            child: Row(
+                              children: [
+                                Icon(
+                                  Icons.sort_by_alpha,
+                                  size: 20,
+                                  color: _fileSortType == FileSortType.name
+                                      ? Theme.of(context).colorScheme.primary
+                                      : null,
+                                ),
+                                const SizedBox(width: 8),
+                                Text(l10n.sortByName),
+                              ],
+                            ),
+                          ),
+                          PopupMenuItem(
+                            value: FileSortType.date,
+                            child: Row(
+                              children: [
+                                Icon(
+                                  Icons.access_time,
+                                  size: 20,
+                                  color: _fileSortType == FileSortType.date
+                                      ? Theme.of(context).colorScheme.primary
+                                      : null,
+                                ),
+                                const SizedBox(width: 8),
+                                Text(l10n.sortByDate),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.chevron_right),
+                        onPressed: _canNavigateNext
+                            ? () => _navigateToFile(1)
+                            : null,
+                        tooltip: _nextFileName != null
+                            ? l10n.nextFileWithName(_nextFileName!)
+                            : l10n.nextFileTooltip,
+                      ),
+                      const VerticalDivider(),
+                    ],
                     IconButton(
                       icon: const Icon(Icons.folder_open),
                       onPressed: _pickImage,
@@ -457,6 +998,11 @@ class _ImageEditorScreenState extends State<ImageEditorScreen> {
                             ? () => _painterController.undo()
                             : null,
                         tooltip: l10n.undoTooltip,
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.delete_sweep),
+                        onPressed: _imageData != null ? _clearAllEdits : null,
+                        tooltip: l10n.clearAllTooltip,
                       ),
                     ],
                     const SizedBox(width: 8),
@@ -533,6 +1079,7 @@ class _ImageEditorScreenState extends State<ImageEditorScreen> {
                           onColorChanged: _updateColor,
                           onStrokeWidthChanged: _updateStrokeWidth,
                           onCropPressed: _enterCropMode,
+                          onResizePressed: _showResizeDialog,
                         ),
 
                       // Canvas
@@ -545,43 +1092,169 @@ class _ImageEditorScreenState extends State<ImageEditorScreen> {
                                     color: Theme.of(
                                       context,
                                     ).colorScheme.surfaceContainerLowest,
-                                    child: InteractiveViewer(
-                                      transformationController:
-                                          _transformationController,
-                                      minScale: 0.1,
-                                      maxScale: 4.0,
-                                      boundaryMargin: const EdgeInsets.all(80),
-                                      constrained: false,
-                                      onInteractionUpdate: (details) {
+                                    child: Listener(
+                                      onPointerDown: (event) {
+                                        // Detecta quando o botão direito (botão 2) ou botão do meio (botão 4) do mouse é pressionado
+                                        if (event.buttons == 2 ||
+                                            event.buttons == 4) {
+                                          setState(() {
+                                            _isRightMouseButtonDown = true;
+                                            _lastPanPosition = event.position;
+                                          });
+                                        }
+                                      },
+                                      onPointerMove: (event) {
+                                        // Move a imagem quando o botão direito está pressionado
+                                        if (_isRightMouseButtonDown &&
+                                            _lastPanPosition != null) {
+                                          final delta =
+                                              event.position -
+                                              _lastPanPosition!;
+
+                                          // Cria uma matriz de translação e multiplica com a transformação atual
+                                          final translation = Matrix4.identity()
+                                            ..setTranslationRaw(
+                                              delta.dx,
+                                              delta.dy,
+                                              0,
+                                            );
+                                          final currentTransform =
+                                              translation *
+                                              _transformationController.value;
+
+                                          setState(() {
+                                            _transformationController.value =
+                                                currentTransform;
+                                            _lastPanPosition = event.position;
+                                          });
+                                        }
+                                      },
+                                      onPointerUp: (event) {
+                                        // Reseta o estado quando o botão é solto
+                                        if (event.buttons != 2 &&
+                                            event.buttons != 4) {
+                                          setState(() {
+                                            _isRightMouseButtonDown = false;
+                                            _lastPanPosition = null;
+                                          });
+                                        }
+                                      },
+                                      onPointerCancel: (event) {
+                                        // Reseta o estado se o evento for cancelado
                                         setState(() {
-                                          _currentScale =
-                                              _transformationController.value
-                                                  .getMaxScaleOnAxis();
+                                          _isRightMouseButtonDown = false;
+                                          _lastPanPosition = null;
                                         });
                                       },
-                                      child: Center(
-                                        child: Card(
-                                          elevation: 8,
-                                          margin: const EdgeInsets.all(20),
-                                          clipBehavior: Clip.antiAlias,
-                                          child: RepaintBoundary(
-                                            key: _repaintBoundaryKey,
-                                            child: _currentImage != null
-                                                ? SizedBox(
-                                                    width: _currentImage!.width
-                                                        .toDouble(),
-                                                    height: _currentImage!
-                                                        .height
-                                                        .toDouble(),
-                                                    child: FlutterPainter(
+                                      child: InteractiveViewer(
+                                        transformationController:
+                                            _transformationController,
+                                        minScale: 0.1,
+                                        maxScale: 4.0,
+                                        boundaryMargin: const EdgeInsets.all(
+                                          80,
+                                        ),
+                                        constrained: false,
+                                        onInteractionUpdate: (details) {
+                                          setState(() {
+                                            _currentScale =
+                                                _transformationController.value
+                                                    .getMaxScaleOnAxis();
+                                          });
+                                        },
+                                        child: Center(
+                                          child: Card(
+                                            elevation: 8,
+                                            margin: const EdgeInsets.all(20),
+                                            clipBehavior: Clip.antiAlias,
+                                            child: RepaintBoundary(
+                                              key: _repaintBoundaryKey,
+                                              child: _currentImage != null
+                                                  ? MouseRegion(
+                                                      cursor:
+                                                          _selectedTool ==
+                                                              EditorTool.eraser
+                                                          ? SystemMouseCursors
+                                                                .none
+                                                          : MouseCursor.defer,
+                                                      onEnter: (_) {
+                                                        setState(() {
+                                                          _isMouseOverCanvas =
+                                                              true;
+                                                        });
+                                                      },
+                                                      onExit: (_) {
+                                                        setState(() {
+                                                          _isMouseOverCanvas =
+                                                              false;
+                                                        });
+                                                      },
+                                                      onHover: (event) {
+                                                        setState(() {
+                                                          _mousePosition = event
+                                                              .localPosition;
+                                                        });
+                                                      },
+                                                      child: Stack(
+                                                        children: [
+                                                          SizedBox(
+                                                            width:
+                                                                _currentImage!
+                                                                    .width
+                                                                    .toDouble(),
+                                                            height:
+                                                                _currentImage!
+                                                                    .height
+                                                                    .toDouble(),
+                                                            child: FlutterPainter(
+                                                              controller:
+                                                                  _painterController,
+                                                            ),
+                                                          ),
+                                                          // Overlay do cursor da borracha
+                                                          if (_selectedTool ==
+                                                                  EditorTool
+                                                                      .eraser &&
+                                                              _isMouseOverCanvas &&
+                                                              _mousePosition !=
+                                                                  null)
+                                                            Positioned(
+                                                              left:
+                                                                  _mousePosition!
+                                                                      .dx -
+                                                                  _strokeWidth /
+                                                                      2,
+                                                              top:
+                                                                  _mousePosition!
+                                                                      .dy -
+                                                                  _strokeWidth /
+                                                                      2,
+                                                              child: IgnorePointer(
+                                                                child: Container(
+                                                                  width:
+                                                                      _strokeWidth,
+                                                                  height:
+                                                                      _strokeWidth,
+                                                                  decoration: BoxDecoration(
+                                                                    shape: BoxShape
+                                                                        .circle,
+                                                                    border: Border.all(
+                                                                      color: Colors
+                                                                          .black,
+                                                                      width: 2,
+                                                                    ),
+                                                                  ),
+                                                                ),
+                                                              ),
+                                                            ),
+                                                        ],
+                                                      ),
+                                                    )
+                                                  : FlutterPainter(
                                                       controller:
                                                           _painterController,
                                                     ),
-                                                  )
-                                                : FlutterPainter(
-                                                    controller:
-                                                        _painterController,
-                                                  ),
+                                            ),
                                           ),
                                         ),
                                       ),
@@ -624,6 +1297,190 @@ class _ImageEditorScreenState extends State<ImageEditorScreen> {
                                       ),
                                     ),
                                   ),
+                                  // Seletor de estilo de seta (visível apenas quando a ferramenta seta está selecionada)
+                                  if (_selectedTool == EditorTool.arrow &&
+                                      _showArrowStyleSelector)
+                                    Positioned(
+                                      top: 16,
+                                      left: 16,
+                                      child: Card(
+                                        elevation: 4,
+                                        child: Padding(
+                                          padding: const EdgeInsets.all(12.0),
+                                          child: Column(
+                                            mainAxisSize: MainAxisSize.min,
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              Row(
+                                                mainAxisAlignment:
+                                                    MainAxisAlignment
+                                                        .spaceBetween,
+                                                children: [
+                                                  Text(
+                                                    'Estilo da Seta',
+                                                    style: Theme.of(context)
+                                                        .textTheme
+                                                        .titleSmall
+                                                        ?.copyWith(
+                                                          fontWeight:
+                                                              FontWeight.bold,
+                                                        ),
+                                                  ),
+                                                  IconButton(
+                                                    icon: const Icon(
+                                                      Icons.close,
+                                                      size: 18,
+                                                    ),
+                                                    onPressed: () {
+                                                      setState(() {
+                                                        _showArrowStyleSelector =
+                                                            false;
+                                                      });
+                                                    },
+                                                    padding: EdgeInsets.zero,
+                                                    constraints:
+                                                        const BoxConstraints(),
+                                                    tooltip: 'Fechar',
+                                                  ),
+                                                ],
+                                              ),
+                                              const SizedBox(height: 8),
+                                              ...ArrowStyle.values.map((style) {
+                                                final isSelected =
+                                                    _arrowStyle == style;
+                                                return Padding(
+                                                  padding:
+                                                      const EdgeInsets.only(
+                                                        bottom: 4.0,
+                                                      ),
+                                                  child: Material(
+                                                    color: Colors.transparent,
+                                                    child: InkWell(
+                                                      onTap: () =>
+                                                          _updateArrowStyle(
+                                                            style,
+                                                          ),
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                            8,
+                                                          ),
+                                                      child: Container(
+                                                        padding:
+                                                            const EdgeInsets.symmetric(
+                                                              horizontal: 12,
+                                                              vertical: 8,
+                                                            ),
+                                                        decoration: BoxDecoration(
+                                                          color: isSelected
+                                                              ? Theme.of(
+                                                                      context,
+                                                                    )
+                                                                    .colorScheme
+                                                                    .primaryContainer
+                                                              : Colors
+                                                                    .transparent,
+                                                          borderRadius:
+                                                              BorderRadius.circular(
+                                                                8,
+                                                              ),
+                                                          border: Border.all(
+                                                            color: isSelected
+                                                                ? Theme.of(
+                                                                        context,
+                                                                      )
+                                                                      .colorScheme
+                                                                      .primary
+                                                                : Colors
+                                                                      .transparent,
+                                                            width: 2,
+                                                          ),
+                                                        ),
+                                                        child: Column(
+                                                          crossAxisAlignment:
+                                                              CrossAxisAlignment
+                                                                  .start,
+                                                          children: [
+                                                            Row(
+                                                              children: [
+                                                                Icon(
+                                                                  style ==
+                                                                          ArrowStyle
+                                                                              .standard
+                                                                      ? Icons
+                                                                            .arrow_forward
+                                                                      : style ==
+                                                                            ArrowStyle.wide
+                                                                      ? Icons
+                                                                            .arrow_right_alt
+                                                                      : Icons
+                                                                            .turn_right,
+                                                                  size: 20,
+                                                                  color:
+                                                                      isSelected
+                                                                      ? Theme.of(
+                                                                          context,
+                                                                        ).colorScheme.onPrimaryContainer
+                                                                      : Theme.of(
+                                                                          context,
+                                                                        ).colorScheme.onSurface,
+                                                                ),
+                                                                const SizedBox(
+                                                                  width: 8,
+                                                                ),
+                                                                Text(
+                                                                  style
+                                                                      .displayName,
+                                                                  style: TextStyle(
+                                                                    fontWeight:
+                                                                        isSelected
+                                                                        ? FontWeight
+                                                                              .bold
+                                                                        : FontWeight
+                                                                              .normal,
+                                                                    color:
+                                                                        isSelected
+                                                                        ? Theme.of(
+                                                                            context,
+                                                                          ).colorScheme.onPrimaryContainer
+                                                                        : Theme.of(
+                                                                            context,
+                                                                          ).colorScheme.onSurface,
+                                                                  ),
+                                                                ),
+                                                              ],
+                                                            ),
+                                                            const SizedBox(
+                                                              height: 4,
+                                                            ),
+                                                            Text(
+                                                              style.description,
+                                                              style: Theme.of(context)
+                                                                  .textTheme
+                                                                  .bodySmall
+                                                                  ?.copyWith(
+                                                                    color:
+                                                                        isSelected
+                                                                        ? Theme.of(
+                                                                            context,
+                                                                          ).colorScheme.onPrimaryContainer
+                                                                        : Theme.of(
+                                                                            context,
+                                                                          ).colorScheme.onSurfaceVariant,
+                                                                  ),
+                                                            ),
+                                                          ],
+                                                        ),
+                                                      ),
+                                                    ),
+                                                  ),
+                                                );
+                                              }),
+                                            ],
+                                          ),
+                                        ),
+                                      ),
+                                    ),
                                 ],
                               )
                             : _buildCropView(),
@@ -640,12 +1497,67 @@ class _ImageEditorScreenState extends State<ImageEditorScreen> {
     final l10n = AppLocalizations.of(context)!;
     return Column(
       children: [
+        // Aspect ratio presets
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          child: Column(
+            children: [
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                alignment: WrapAlignment.center,
+                children: [
+                  _buildAspectRatioChip(l10n.aspectRatioFree, null, l10n),
+                  _buildAspectRatioChip('1:1', 1.0, l10n),
+                  _buildAspectRatioChip('4:3', 4.0 / 3.0, l10n),
+                  _buildAspectRatioChip('16:9', 16.0 / 9.0, l10n),
+                  _buildAspectRatioChip('3:2', 3.0 / 2.0, l10n),
+                  _buildAspectRatioChip('9:16', 9.0 / 16.0, l10n),
+                ],
+              ),
+              const SizedBox(height: 8),
+              OutlinedButton.icon(
+                onPressed: _showFixedSizeCropDialog,
+                icon: const Icon(Icons.crop_din, size: 18),
+                label: Text(l10n.fixedSizeLabel),
+                style: OutlinedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 8,
+                  ),
+                ),
+              ),
+              if (_fixedCropSize != null)
+                Padding(
+                  padding: const EdgeInsets.only(top: 8),
+                  child: Chip(
+                    label: Text(
+                      '${_fixedCropSize!.width.toInt()} x ${_fixedCropSize!.height.toInt()} px',
+                      style: const TextStyle(fontSize: 12),
+                    ),
+                    onDeleted: () {
+                      setState(() {
+                        _fixedCropSize = null;
+                      });
+                    },
+                    deleteIcon: const Icon(Icons.close, size: 16),
+                  ),
+                ),
+            ],
+          ),
+        ),
         Expanded(
           child: Crop(
+            key: ValueKey(
+              '${_selectedAspectRatio}_${_fixedCropSize?.width}_${_fixedCropSize?.height}',
+            ),
             image: _imageData!,
             controller: _cropController,
             onCropped: _applyCrop,
             withCircleUi: false,
+            aspectRatio: _fixedCropSize == null
+                ? _selectedAspectRatio
+                : (_fixedCropSize!.width / _fixedCropSize!.height),
             maskColor: Colors.black.withValues(alpha: 0.5),
             cornerDotBuilder: (size, edgeAlignment) {
               return Container(
@@ -684,6 +1596,103 @@ class _ImageEditorScreenState extends State<ImageEditorScreen> {
       ],
     );
   }
+
+  Widget _buildAspectRatioChip(
+    String label,
+    double? aspectRatio,
+    AppLocalizations l10n,
+  ) {
+    final isSelected =
+        _selectedAspectRatio == aspectRatio && _fixedCropSize == null;
+    return ChoiceChip(
+      label: Text(label),
+      selected: isSelected,
+      onSelected: (_) {
+        setState(() {
+          _selectedAspectRatio = aspectRatio;
+          _fixedCropSize = null;
+        });
+      },
+    );
+  }
+
+  Future<void> _showFixedSizeCropDialog() async {
+    final l10n = AppLocalizations.of(context)!;
+    final widthController = TextEditingController();
+    final heightController = TextEditingController();
+
+    final result = await showDialog<Map<String, int>>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(l10n.fixedSizeDialogTitle),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              l10n.fixedSizeDialogDescription,
+              style: Theme.of(context).textTheme.bodyMedium,
+            ),
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: widthController,
+                    keyboardType: TextInputType.number,
+                    decoration: InputDecoration(
+                      labelText: l10n.widthLabel,
+                      suffixText: 'px',
+                      border: const OutlineInputBorder(),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: TextField(
+                    controller: heightController,
+                    keyboardType: TextInputType.number,
+                    decoration: InputDecoration(
+                      labelText: l10n.heightLabel,
+                      suffixText: 'px',
+                      border: const OutlineInputBorder(),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(l10n.cancelButtonLabel),
+          ),
+          FilledButton(
+            onPressed: () {
+              final width = int.tryParse(widthController.text);
+              final height = int.tryParse(heightController.text);
+              if (width != null && height != null && width > 0 && height > 0) {
+                Navigator.pop(context, {'width': width, 'height': height});
+              }
+            },
+            child: Text(l10n.okButtonLabel),
+          ),
+        ],
+      ),
+    );
+
+    if (result != null) {
+      setState(() {
+        _selectedAspectRatio = null;
+        _fixedCropSize = Rect.fromLTWH(
+          0,
+          0,
+          result['width']!.toDouble(),
+          result['height']!.toDouble(),
+        );
+      });
+    }
+  }
 }
 
 // Intent classes for keyboard shortcuts
@@ -709,4 +1718,8 @@ class _CopyImageIntent extends Intent {
 
 class _UndoIntent extends Intent {
   const _UndoIntent();
+}
+
+class _DeleteDrawableIntent extends Intent {
+  const _DeleteDrawableIntent();
 }

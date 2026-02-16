@@ -30,6 +30,37 @@ class AppLocalizationsEn extends AppLocalizations {
   String get undoTooltip => 'Undo (Ctrl+Z)';
 
   @override
+  String get clearAllTooltip => 'Clear all changes';
+
+  @override
+  String get previousFileTooltip => 'Previous file';
+
+  @override
+  String get nextFileTooltip => 'Next file';
+
+  @override
+  String previousFileWithName(Object fileName) {
+    return 'Previous: $fileName';
+  }
+
+  @override
+  String nextFileWithName(Object fileName) {
+    return 'Next: $fileName';
+  }
+
+  @override
+  String get fileNavigationTooltip => 'Go to file';
+
+  @override
+  String get sortByTooltip => 'Sort by';
+
+  @override
+  String get sortByName => 'Name';
+
+  @override
+  String get sortByDate => 'Date';
+
+  @override
   String get closeTooltip => 'Close';
 
   @override
@@ -144,4 +175,81 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get okButtonLabel => 'OK';
+
+  @override
+  String get textDialogTitle => 'Add Text';
+
+  @override
+  String get textInputLabel => 'Text';
+
+  @override
+  String get textInputHint => 'Type your text here...';
+
+  @override
+  String get fontSizeLabel => 'Font size:';
+
+  @override
+  String get textStyleLabel => 'Text style';
+
+  @override
+  String get textPreviewLabel => 'Preview';
+
+  @override
+  String get textPreviewPlaceholder => 'Sample text';
+
+  @override
+  String get resizeTooltip => 'Resize';
+
+  @override
+  String get resizeDialogTitle => 'Resize Image';
+
+  @override
+  String currentSizeLabel(Object width, Object height) {
+    return 'Current: $width x $height px';
+  }
+
+  @override
+  String get pixelsLabel => 'Pixels';
+
+  @override
+  String get percentageLabel => 'Percentage';
+
+  @override
+  String get percentageHelperText => 'e.g., 50 for half size, 200 for double';
+
+  @override
+  String get widthLabel => 'Width';
+
+  @override
+  String get heightLabel => 'Height';
+
+  @override
+  String get maintainAspectRatioLabel => 'Maintain aspect ratio';
+
+  @override
+  String newSizeLabel(Object width, Object height) {
+    return 'New size: $width x $height px';
+  }
+
+  @override
+  String get applyButtonLabel => 'Apply';
+
+  @override
+  String get errorResizeImage => 'Failed to resize image';
+
+  @override
+  String get imageResizedSuccess => 'Image resized successfully!';
+
+  @override
+  String get aspectRatioFree => 'Free';
+
+  @override
+  String get fixedSizeLabel => 'Fixed Size (px)';
+
+  @override
+  String get fixedSizeDialogTitle => 'Fixed Size Crop';
+
+  @override
+  String get fixedSizeDialogDescription =>
+      'Enter dimensions in pixels. The crop area will be fixed and you can only reposition it.';
 }

@@ -140,6 +140,60 @@ abstract class AppLocalizations {
   /// **'Undo (Ctrl+Z)'**
   String get undoTooltip;
 
+  /// No description provided for @clearAllTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear all changes'**
+  String get clearAllTooltip;
+
+  /// No description provided for @previousFileTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Previous file'**
+  String get previousFileTooltip;
+
+  /// No description provided for @nextFileTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Next file'**
+  String get nextFileTooltip;
+
+  /// No description provided for @previousFileWithName.
+  ///
+  /// In en, this message translates to:
+  /// **'Previous: {fileName}'**
+  String previousFileWithName(Object fileName);
+
+  /// No description provided for @nextFileWithName.
+  ///
+  /// In en, this message translates to:
+  /// **'Next: {fileName}'**
+  String nextFileWithName(Object fileName);
+
+  /// No description provided for @fileNavigationTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Go to file'**
+  String get fileNavigationTooltip;
+
+  /// No description provided for @sortByTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Sort by'**
+  String get sortByTooltip;
+
+  /// No description provided for @sortByName.
+  ///
+  /// In en, this message translates to:
+  /// **'Name'**
+  String get sortByName;
+
+  /// No description provided for @sortByDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Date'**
+  String get sortByDate;
+
   /// No description provided for @closeTooltip.
   ///
   /// In en, this message translates to:
@@ -343,6 +397,150 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'OK'**
   String get okButtonLabel;
+
+  /// No description provided for @textDialogTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Add Text'**
+  String get textDialogTitle;
+
+  /// No description provided for @textInputLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Text'**
+  String get textInputLabel;
+
+  /// No description provided for @textInputHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Type your text here...'**
+  String get textInputHint;
+
+  /// No description provided for @fontSizeLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Font size:'**
+  String get fontSizeLabel;
+
+  /// No description provided for @textStyleLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Text style'**
+  String get textStyleLabel;
+
+  /// No description provided for @textPreviewLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Preview'**
+  String get textPreviewLabel;
+
+  /// No description provided for @textPreviewPlaceholder.
+  ///
+  /// In en, this message translates to:
+  /// **'Sample text'**
+  String get textPreviewPlaceholder;
+
+  /// No description provided for @resizeTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Resize'**
+  String get resizeTooltip;
+
+  /// No description provided for @resizeDialogTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Resize Image'**
+  String get resizeDialogTitle;
+
+  /// No description provided for @currentSizeLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Current: {width} x {height} px'**
+  String currentSizeLabel(Object width, Object height);
+
+  /// No description provided for @pixelsLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Pixels'**
+  String get pixelsLabel;
+
+  /// No description provided for @percentageLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Percentage'**
+  String get percentageLabel;
+
+  /// No description provided for @percentageHelperText.
+  ///
+  /// In en, this message translates to:
+  /// **'e.g., 50 for half size, 200 for double'**
+  String get percentageHelperText;
+
+  /// No description provided for @widthLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Width'**
+  String get widthLabel;
+
+  /// No description provided for @heightLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Height'**
+  String get heightLabel;
+
+  /// No description provided for @maintainAspectRatioLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Maintain aspect ratio'**
+  String get maintainAspectRatioLabel;
+
+  /// No description provided for @newSizeLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'New size: {width} x {height} px'**
+  String newSizeLabel(Object width, Object height);
+
+  /// No description provided for @applyButtonLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Apply'**
+  String get applyButtonLabel;
+
+  /// No description provided for @errorResizeImage.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to resize image'**
+  String get errorResizeImage;
+
+  /// No description provided for @imageResizedSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Image resized successfully!'**
+  String get imageResizedSuccess;
+
+  /// No description provided for @aspectRatioFree.
+  ///
+  /// In en, this message translates to:
+  /// **'Free'**
+  String get aspectRatioFree;
+
+  /// No description provided for @fixedSizeLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Fixed Size (px)'**
+  String get fixedSizeLabel;
+
+  /// No description provided for @fixedSizeDialogTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Fixed Size Crop'**
+  String get fixedSizeDialogTitle;
+
+  /// No description provided for @fixedSizeDialogDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter dimensions in pixels. The crop area will be fixed and you can only reposition it.'**
+  String get fixedSizeDialogDescription;
 }
 
 class _AppLocalizationsDelegate
