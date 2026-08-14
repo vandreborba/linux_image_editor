@@ -6,9 +6,11 @@ class EditorToolbar extends StatelessWidget {
   final EditorTool selectedTool;
   final Color selectedColor;
   final double strokeWidth;
+  final double brushStabilization;
   final Function(EditorTool) onToolSelected;
   final Function(Color) onColorChanged;
   final Function(double) onStrokeWidthChanged;
+  final Function(double) onBrushStabilizationChanged;
   final VoidCallback onCropPressed;
   final VoidCallback onResizePressed;
 
@@ -17,9 +19,11 @@ class EditorToolbar extends StatelessWidget {
     required this.selectedTool,
     required this.selectedColor,
     required this.strokeWidth,
+    required this.brushStabilization,
     required this.onToolSelected,
     required this.onColorChanged,
     required this.onStrokeWidthChanged,
+    required this.onBrushStabilizationChanged,
     required this.onCropPressed,
     required this.onResizePressed,
   });
@@ -105,6 +109,8 @@ class EditorToolbar extends StatelessWidget {
           _buildColorPicker(context),
           const SizedBox(height: 12),
           _buildStrokeWidthPicker(context),
+          const SizedBox(height: 12),
+          _buildStabilizationPicker(context),
           const SizedBox(height: 16),
         ],
       ),
@@ -380,6 +386,102 @@ class EditorToolbar extends StatelessWidget {
           },
         );
       },
+    );
+  }
+
+  void _showStabilizationPicker(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    double localStabilization = brushStabilization;
+
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return Dialog(
+              child: Container(
+                width: 300,
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      l10n.stabilizationTitle,
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
+                    const SizedBox(height: 20),
+                    Slider(
+                      value: localStabilization,
+                      min: 0,
+                      max: 10,
+                      divisions: 10,
+                      label: localStabilization.toInt().toString(),
+                      onChanged: (value) {
+                        setState(() {
+                          localStabilization = value;
+                        });
+                        onBrushStabilizationChanged(value);
+                      },
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      '${localStabilization.toInt()} / 10',
+                      style: Theme.of(context).textTheme.bodyMedium,
+                    ),
+                    const SizedBox(height: 20),
+                    FilledButton(
+                      onPressed: () => Navigator.pop(context),
+                      child: Text(l10n.okButtonLabel),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Widget _buildStabilizationPicker(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 8),
+      child: GestureDetector(
+        onTap: () => _showStabilizationPicker(context),
+        child: Tooltip(
+          message: l10n.stabilizationTooltip(brushStabilization.toInt()),
+          child: Container(
+            width: 56,
+            height: 56,
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.surfaceContainerHighest,
+              border: Border.all(
+                color: Theme.of(context).colorScheme.outline,
+                width: 2,
+              ),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.graphic_eq,
+                  size: 20,
+                  color: Theme.of(context).colorScheme.onSurface,
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  '${brushStabilization.toInt()}',
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodySmall?.copyWith(fontWeight: FontWeight.bold),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
     );
   }
 }

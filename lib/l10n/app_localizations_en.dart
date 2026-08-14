@@ -252,4 +252,65 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get fixedSizeDialogDescription =>
       'Enter dimensions in pixels. The crop area will be fixed and you can only reposition it.';
+
+  @override
+  String get redoTooltip => 'Redo (Ctrl+Shift+Z)';
+
+  @override
+  String get copyTooltip => 'Copy (Ctrl+C)';
+
+  @override
+  String get arrowStyleTitle => 'Arrow Style';
+
+  @override
+  String get arrowStyleStandard => 'Standard';
+
+  @override
+  String get arrowStyleStandardDesc => 'Arrow with closed tip';
+
+  @override
+  String get arrowStyleWide => 'Wide';
+
+  @override
+  String get arrowStyleWideDesc => 'Arrow with wider tip';
+
+  @override
+  String get arrowStyleCurved => 'Curved';
+
+  @override
+  String get arrowStyleCurvedDesc => 'Curved arrow';
+
+  @override
+  String get textStylePlain => 'Plain';
+
+  @override
+  String get textStylePlainDesc => 'Simple text without effects';
+
+  @override
+  String get textStyleShadow => 'Shadow';
+
+  @override
+  String get textStyleShadowDesc => 'Text with shadow for emphasis';
+
+  @override
+  String get textStyleRoundedBox => 'Rounded Box';
+
+  @override
+  String get textStyleRoundedBoxDesc =>
+      'Text with rounded background for contrast';
+
+  @override
+  String stabilizationTooltip(Object value) {
+    return 'Stabilization: $value';
+  }
+
+  @override
+  String get stabilizationTitle => 'Brush stabilization';
+
+  @override
+  String get errorCropImage => 'Could not crop the image';
+
+  @override
+  String get xclipNotInstalled =>
+      'xclip is not installed. Install with: sudo apt install xclip';
 }

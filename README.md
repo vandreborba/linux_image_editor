@@ -38,6 +38,19 @@ flutter pub get
 flutter run -d linux
 ```
 
+### Keyboard Shortcuts
+
+| Shortcut | Action |
+|----------|--------|
+| Ctrl+O | Open image |
+| Ctrl+V | Paste image from clipboard |
+| Ctrl+S | Save |
+| Ctrl+Shift+S | Save As |
+| Ctrl+C | Copy composite to clipboard |
+| Ctrl+Z | Undo |
+| Ctrl+Shift+Z | Redo |
+| Delete / Backspace | Delete selected annotation |
+
 ### License
 
 GPL-3.0. See LICENSE.
@@ -70,6 +83,19 @@ Após instalar, execute o script incluído:
 flutter pub get
 flutter run -d linux
 ```
+
+### Atalhos de Teclado
+
+| Atalho | Ação |
+|--------|------|
+| Ctrl+O | Abrir imagem |
+| Ctrl+V | Colar imagem da área de transferência |
+| Ctrl+S | Salvar |
+| Ctrl+Shift+S | Salvar como |
+| Ctrl+C | Copiar composição para área de transferência |
+| Ctrl+Z | Desfazer |
+| Ctrl+Shift+Z | Refazer |
+| Delete / Backspace | Excluir anotação selecionada |
 
 ### Licença
 

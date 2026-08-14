@@ -1,47 +1,48 @@
+import 'package:linux_image_editor/l10n/app_localizations.dart';
+
 enum ArrowStyle { standard, wide, curved }
 
 extension ArrowStyleExtension on ArrowStyle {
-  String get displayName {
+  String displayName(AppLocalizations l10n) {
     switch (this) {
       case ArrowStyle.standard:
-        return 'Padrão';
+        return l10n.arrowStyleStandard;
       case ArrowStyle.wide:
-        return 'Aberta';
+        return l10n.arrowStyleWide;
       case ArrowStyle.curved:
-        return 'Curva';
+        return l10n.arrowStyleCurved;
     }
   }
 
-  String get description {
+  String description(AppLocalizations l10n) {
     switch (this) {
       case ArrowStyle.standard:
-        return 'Seta com ponta fechada';
+        return l10n.arrowStyleStandardDesc;
       case ArrowStyle.wide:
-        return 'Seta com ponta mais aberta';
+        return l10n.arrowStyleWideDesc;
       case ArrowStyle.curved:
-        return 'Seta curvada';
+        return l10n.arrowStyleCurvedDesc;
     }
   }
 
-  // Configurações visuais para cada estilo
   ArrowStyleConfig get config {
     switch (this) {
       case ArrowStyle.standard:
-        return ArrowStyleConfig(
+        return const ArrowStyleConfig(
           arrowHeadSizeMultiplier: 3.0,
           arrowHeadAngle: 25.0,
           curved: false,
           filled: true,
         );
       case ArrowStyle.wide:
-        return ArrowStyleConfig(
+        return const ArrowStyleConfig(
           arrowHeadSizeMultiplier: 3.5,
           arrowHeadAngle: 50.0,
           curved: false,
           filled: false,
         );
       case ArrowStyle.curved:
-        return ArrowStyleConfig(
+        return const ArrowStyleConfig(
           arrowHeadSizeMultiplier: 3.2,
           arrowHeadAngle: 28.0,
           curved: true,

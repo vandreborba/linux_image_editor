@@ -23,6 +23,7 @@ import '../drawables/rounded_box_text_drawable.dart';
 import '../widgets/toolbar.dart';
 import '../widgets/text_input_dialog.dart';
 import '../widgets/resize_dialog.dart';
+import '../utils/path_smoother.dart';
 
 class ImageEditorScreen extends StatefulWidget {
   final String? initialFilePath;
@@ -42,6 +43,8 @@ class _ImageEditorScreenState extends State<ImageEditorScreen> {
   final CropController _cropController = CropController();
   Color _selectedColor = Colors.red;
   double _strokeWidth = 3.0;
+  double _brushStabilization = 5.0;
+  final FocusNode _canvasFocusNode = FocusNode();
   final GlobalKey _repaintBoundaryKey = GlobalKey();
   final TransformationController _transformationController =
       TransformationController();
@@ -70,7 +73,20 @@ class _ImageEditorScreenState extends State<ImageEditorScreen> {
   @override
   void initState() {
     super.initState();
-    _painterController = PainterController(
+    _painterController = _createPainterController();
+    HardwareKeyboard.instance.addHandler(_handleKeyEvent);
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (widget.initialFilePath != null) {
+        _loadImageFromFile(widget.initialFilePath!);
+      } else {
+        _loadImageFromClipboard();
+      }
+    });
+  }
+
+  PainterController _createPainterController() {
+    return PainterController(
       settings: PainterSettings(
         freeStyle: FreeStyleSettings(
           color: _selectedColor,
@@ -87,20 +103,128 @@ class _ImageEditorScreenState extends State<ImageEditorScreen> {
         ),
       ),
     );
+  }
 
-    // Aguarda um pouco antes de tentar carregar da área de transferência
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (widget.initialFilePath != null) {
-        _loadImageFromFile(widget.initialFilePath!);
-      } else {
-        // Se não houver arquivo inicial, tenta carregar da área de transferência
-        _loadImageFromClipboard();
-      }
+  void _recreatePainter(ui.Image uiImage, {bool resetTool = true}) {
+    _painterController.dispose();
+    _painterController = _createPainterController();
+    _painterController.background = uiImage.backgroundDrawable;
+
+    if (resetTool) {
+      _selectedTool = EditorTool.none;
+      _showArrowStyleSelector = false;
+      _applyToolSettings(EditorTool.none);
+    } else {
+      _applyToolSettings(_selectedTool);
+    }
+  }
+
+  Future<bool> _flattenAnnotations() async {
+    if (_currentImage == null) return false;
+    if (_painterController.value.drawables.isEmpty) return false;
+
+    final bytes = await _captureImage();
+    if (bytes == null || !mounted) return false;
+
+    final uiImage = await _bytesToUiImage(bytes);
+    if (!mounted) return false;
+
+    setState(() {
+      _imageData = bytes;
+      _currentImage = uiImage;
+      _recreatePainter(uiImage, resetTool: false);
     });
+    return true;
+  }
+
+  bool _isTextInputFocused() {
+    final focus = FocusManager.instance.primaryFocus;
+    if (focus == null) return false;
+    final focusContext = focus.context;
+    if (focusContext == null) return false;
+    return focusContext.widget is EditableText ||
+        focusContext.findAncestorWidgetOfExactType<TextField>() != null;
+  }
+
+  bool _handleKeyEvent(KeyEvent event) {
+    if (event is! KeyDownEvent || _isTextInputFocused()) return false;
+
+    final isCtrl = HardwareKeyboard.instance.isControlPressed;
+    final isShift = HardwareKeyboard.instance.isShiftPressed;
+    final key = event.logicalKey;
+
+    if (isCtrl && key == LogicalKeyboardKey.keyO) {
+      _pickImage();
+      return true;
+    }
+    if (isCtrl && key == LogicalKeyboardKey.keyV) {
+      _loadImageFromClipboard();
+      return true;
+    }
+    if (isCtrl && isShift && key == LogicalKeyboardKey.keyS) {
+      _saveImage(saveAs: true);
+      return true;
+    }
+    if (isCtrl && key == LogicalKeyboardKey.keyS) {
+      _saveImage(saveAs: false);
+      return true;
+    }
+    if (isCtrl && key == LogicalKeyboardKey.keyC) {
+      _copyToClipboard();
+      return true;
+    }
+    if (isCtrl && isShift && key == LogicalKeyboardKey.keyZ) {
+      if (_painterController.canRedo) {
+        _painterController.redo();
+      }
+      return true;
+    }
+    if (isCtrl && key == LogicalKeyboardKey.keyZ) {
+      if (_painterController.canUndo) {
+        _painterController.undo();
+      }
+      return true;
+    }
+    if (key == LogicalKeyboardKey.delete ||
+        key == LogicalKeyboardKey.backspace) {
+      return _deleteSelectedDrawable();
+    }
+
+    return false;
+  }
+
+  bool _deleteSelectedDrawable() {
+    if (_painterController.selectedObjectDrawable == null) return false;
+
+    final selectedDrawable = _painterController.selectedObjectDrawable!;
+    _painterController.removeDrawable(selectedDrawable, newAction: true);
+    _painterController.deselectObjectDrawable(isRemoved: true);
+    return true;
+  }
+
+  void _onDrawableCreated(Drawable drawable) {
+    if (_brushStabilization <= 0) return;
+    if (drawable is! FreeStyleDrawable) return;
+    if (_selectedTool != EditorTool.brush &&
+        _selectedTool != EditorTool.highlighter) {
+      return;
+    }
+
+    final smoothed = PathSmoother.smooth(drawable.path, _brushStabilization);
+    if (smoothed.length < 2) return;
+
+    final smoothedDrawable = drawable.copyWith(path: smoothed);
+    _painterController.replaceDrawable(
+      drawable,
+      smoothedDrawable,
+      newAction: false,
+    );
   }
 
   @override
   void dispose() {
+    HardwareKeyboard.instance.removeHandler(_handleKeyEvent);
+    _canvasFocusNode.dispose();
     _painterController.dispose();
     _transformationController.dispose();
     super.dispose();
@@ -116,8 +240,9 @@ class _ImageEditorScreenState extends State<ImageEditorScreen> {
           _imageData = bytes;
           _currentFilePath = path;
           _currentImage = uiImage;
-          _painterController.background = uiImage.backgroundDrawable;
+          _recreatePainter(uiImage);
           _resetZoom();
+          _mode = EditorMode.draw;
         });
         // Atualiza a lista de arquivos na pasta
         await _updateFilesInDirectory(path);
@@ -142,12 +267,11 @@ class _ImageEditorScreenState extends State<ImageEditorScreen> {
         final uiImage = await _bytesToUiImage(imageBytes);
         setState(() {
           _imageData = imageBytes;
-          _currentFilePath =
-              null; // Não tem arquivo, veio da área de transferência
+          _currentFilePath = null;
           _currentImage = uiImage;
-          _painterController.background = uiImage.backgroundDrawable;
+          _recreatePainter(uiImage);
           _resetZoom();
-          // Limpa a lista de arquivos quando carrega da área de transferência
+          _mode = EditorMode.draw;
           _filesInDirectory = [];
           _currentFileIndex = -1;
         });
@@ -399,9 +523,7 @@ class _ImageEditorScreenState extends State<ImageEditorScreen> {
           }
         } catch (e) {
           if (e.toString().contains('No such file or directory')) {
-            _showError(
-              'xclip não está instalado. Por favor, instale com: sudo apt install xclip',
-            );
+            _showError(l10n.xclipNotInstalled);
           } else {
             rethrow;
           }
@@ -427,59 +549,65 @@ class _ImageEditorScreenState extends State<ImageEditorScreen> {
   void _updateTool(EditorTool tool) {
     setState(() {
       _selectedTool = tool;
+      _applyToolSettings(tool);
 
-      switch (tool) {
-        case EditorTool.brush:
-          _painterController.freeStyleMode = FreeStyleMode.draw;
-          _painterController.shapeFactory = null;
-          _painterController.freeStyleColor = _selectedColor;
-          _painterController.freeStyleStrokeWidth = _strokeWidth;
-          _showArrowStyleSelector = false;
-          break;
-
-        case EditorTool.highlighter:
-          _painterController.freeStyleMode = FreeStyleMode.draw;
-          _painterController.shapeFactory = null;
-          _painterController.freeStyleColor = _selectedColor.withValues(
-            alpha: 0.4,
-          );
-          _painterController.freeStyleStrokeWidth = _strokeWidth * 3;
-          _showArrowStyleSelector = false;
-          break;
-
-        case EditorTool.arrow:
-          _painterController.freeStyleMode = FreeStyleMode.none;
-          _painterController.shapeFactory = StyledArrowFactory(_arrowStyle);
-          _showArrowStyleSelector = true;
-          break;
-
-        case EditorTool.rectangle:
-          _painterController.freeStyleMode = FreeStyleMode.none;
-          _painterController.shapeFactory = RectangleFactory();
-          _showArrowStyleSelector = false;
-          break;
-
-        case EditorTool.text:
-          _painterController.freeStyleMode = FreeStyleMode.none;
-          _painterController.shapeFactory = null;
-          _showArrowStyleSelector = false;
-          _showTextInputDialog();
-          break;
-
-        case EditorTool.eraser:
-          _painterController.freeStyleMode = FreeStyleMode.erase;
-          _painterController.shapeFactory = null;
-          _painterController.freeStyleStrokeWidth = _strokeWidth;
-          _showArrowStyleSelector = false;
-          break;
-
-        case EditorTool.none:
-          _painterController.freeStyleMode = FreeStyleMode.none;
-          _painterController.shapeFactory = null;
-          _showArrowStyleSelector = false;
-          break;
+      if (tool == EditorTool.text) {
+        _showTextInputDialog();
       }
     });
+  }
+
+  void _applyToolSettings(EditorTool tool) {
+    switch (tool) {
+      case EditorTool.brush:
+        _painterController.freeStyleMode = FreeStyleMode.draw;
+        _painterController.shapeFactory = null;
+        _painterController.freeStyleColor = _selectedColor;
+        _painterController.freeStyleStrokeWidth = _strokeWidth;
+        _showArrowStyleSelector = false;
+        break;
+
+      case EditorTool.highlighter:
+        _painterController.freeStyleMode = FreeStyleMode.draw;
+        _painterController.shapeFactory = null;
+        _painterController.freeStyleColor = _selectedColor.withValues(
+          alpha: 0.4,
+        );
+        _painterController.freeStyleStrokeWidth = _strokeWidth * 3;
+        _showArrowStyleSelector = false;
+        break;
+
+      case EditorTool.arrow:
+        _painterController.freeStyleMode = FreeStyleMode.none;
+        _painterController.shapeFactory = StyledArrowFactory(_arrowStyle);
+        _showArrowStyleSelector = true;
+        break;
+
+      case EditorTool.rectangle:
+        _painterController.freeStyleMode = FreeStyleMode.none;
+        _painterController.shapeFactory = RectangleFactory();
+        _showArrowStyleSelector = false;
+        break;
+
+      case EditorTool.text:
+        _painterController.freeStyleMode = FreeStyleMode.none;
+        _painterController.shapeFactory = null;
+        _showArrowStyleSelector = false;
+        break;
+
+      case EditorTool.eraser:
+        _painterController.freeStyleMode = FreeStyleMode.erase;
+        _painterController.shapeFactory = null;
+        _painterController.freeStyleStrokeWidth = _strokeWidth;
+        _showArrowStyleSelector = false;
+        break;
+
+      case EditorTool.none:
+        _painterController.freeStyleMode = FreeStyleMode.none;
+        _painterController.shapeFactory = null;
+        _showArrowStyleSelector = false;
+        break;
+    }
   }
 
   void _updateColor(Color color) {
@@ -515,9 +643,13 @@ class _ImageEditorScreenState extends State<ImageEditorScreen> {
   void _updateStrokeWidth(double width) {
     setState(() {
       _strokeWidth = width;
-      // Reaplica a ferramenta atual para garantir que a espessura seja atualizada corretamente
-      final currentTool = _selectedTool;
-      _updateToolSettings(currentTool, _selectedColor, width);
+      _updateToolSettings(_selectedTool, _selectedColor, width);
+    });
+  }
+
+  void _updateBrushStabilization(double value) {
+    setState(() {
+      _brushStabilization = value;
     });
   }
 
@@ -535,32 +667,8 @@ class _ImageEditorScreenState extends State<ImageEditorScreen> {
 
   void _clearAllEdits() {
     setState(() {
-      // Remove todos os drawables do controller, mantendo apenas o background
       if (_currentImage != null) {
-        // Descarta o controller antigo
-        _painterController.dispose();
-
-        // Cria um novo controller limpo
-        _painterController = PainterController(
-          settings: PainterSettings(
-            freeStyle: FreeStyleSettings(
-              color: _selectedColor,
-              strokeWidth: _strokeWidth,
-            ),
-            shape: ShapeSettings(
-              paint: Paint()
-                ..color = _selectedColor
-                ..strokeWidth = _strokeWidth
-                ..style = PaintingStyle.stroke,
-            ),
-            text: TextSettings(
-              textStyle: TextStyle(color: _selectedColor, fontSize: 24),
-            ),
-          ),
-        );
-        _painterController.background = _currentImage!.backgroundDrawable;
-        // Reaplica a ferramenta atual
-        _updateTool(_selectedTool);
+        _recreatePainter(_currentImage!, resetTool: false);
       }
     });
   }
@@ -573,15 +681,13 @@ class _ImageEditorScreenState extends State<ImageEditorScreen> {
       },
     );
 
-    if (textConfig != null && mounted) {
-      // Atualiza o estilo de texto no controller com base na configuração
+    if (textConfig != null && mounted && _currentImage != null) {
       final styleConfig = textConfig.styleType.config;
 
-      // Calcula a posição central do canvas para adicionar o texto
-      final renderBox = context.findRenderObject() as RenderBox?;
-      final centerPosition = renderBox != null
-          ? Offset(renderBox.size.width / 2, renderBox.size.height / 2)
-          : const Offset(200, 200);
+      final centerPosition = Offset(
+        _currentImage!.width / 2.0,
+        _currentImage!.height / 2.0,
+      );
 
       // Cria o drawable apropriado baseado no estilo
       if (textConfig.styleType == TextStyleType.roundedBox) {
@@ -628,6 +734,10 @@ class _ImageEditorScreenState extends State<ImageEditorScreen> {
 
         _painterController.addDrawables([textDrawable]);
       }
+
+      _updateTool(EditorTool.none);
+    } else if (mounted) {
+      _updateTool(EditorTool.none);
     }
   }
 
@@ -654,17 +764,19 @@ class _ImageEditorScreenState extends State<ImageEditorScreen> {
         setState(() {
           _imageData = finalImage;
           _currentImage = uiImage;
-          _painterController.background = uiImage.backgroundDrawable;
+          _recreatePainter(uiImage, resetTool: false);
           _mode = EditorMode.draw;
-          _fixedCropSize = null; // Reset após aplicar
+          _fixedCropSize = null;
           _resetZoom();
         });
       case CropFailure():
-        _showError('Could not crop the image');
+        _showError(AppLocalizations.of(context)!.errorCropImage);
     }
   }
 
-  void _enterCropMode() {
+  Future<void> _enterCropMode() async {
+    await _flattenAnnotations();
+    if (!mounted) return;
     setState(() {
       _mode = EditorMode.crop;
     });
@@ -692,7 +804,9 @@ class _ImageEditorScreenState extends State<ImageEditorScreen> {
     if (_imageData == null) return;
 
     try {
-      // Decodifica a imagem
+      await _flattenAnnotations();
+      if (_imageData == null) return;
+
       final image = img.decodeImage(_imageData!);
       if (image == null) {
         _showError(l10n.errorResizeImage);
@@ -717,7 +831,7 @@ class _ImageEditorScreenState extends State<ImageEditorScreen> {
       setState(() {
         _imageData = resizedBytes;
         _currentImage = uiImage;
-        _painterController.background = uiImage.backgroundDrawable;
+        _recreatePainter(uiImage, resetTool: false);
         _resetZoom();
       });
 
@@ -759,7 +873,14 @@ class _ImageEditorScreenState extends State<ImageEditorScreen> {
             const _CopyImageIntent(),
         LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.keyZ):
             const _UndoIntent(),
+        LogicalKeySet(
+          LogicalKeyboardKey.control,
+          LogicalKeyboardKey.shift,
+          LogicalKeyboardKey.keyZ,
+        ): const _RedoIntent(),
         LogicalKeySet(LogicalKeyboardKey.delete): const _DeleteDrawableIntent(),
+        LogicalKeySet(LogicalKeyboardKey.backspace):
+            const _DeleteDrawableIntent(),
       },
       child: Actions(
         actions: <Type, Action<Intent>>{
@@ -786,44 +907,24 @@ class _ImageEditorScreenState extends State<ImageEditorScreen> {
               return null;
             },
           ),
+          _RedoIntent: CallbackAction<_RedoIntent>(
+            onInvoke: (_) {
+              if (_painterController.canRedo) {
+                _painterController.redo();
+              }
+              return null;
+            },
+          ),
           _DeleteDrawableIntent: CallbackAction<_DeleteDrawableIntent>(
             onInvoke: (_) {
-              // Verifica se há um drawable selecionado
-              if (_painterController.selectedObjectDrawable != null) {
-                // Armazena referência antes de remover
-                final selectedDrawable =
-                    _painterController.selectedObjectDrawable!;
-                // Remove o drawable (newAction: true permite desfazer)
-                _painterController.removeDrawable(
-                  selectedDrawable,
-                  newAction: true,
-                );
-                // Desseleciona (isRemoved: true envia evento de limpeza)
-                _painterController.deselectObjectDrawable(isRemoved: true);
-              }
+              _deleteSelectedDrawable();
               return null;
             },
           ),
         },
         child: Focus(
+          focusNode: _canvasFocusNode,
           autofocus: true,
-          onKeyEvent: (node, event) {
-            // Captura a tecla Delete diretamente
-            if (event is KeyDownEvent &&
-                event.logicalKey == LogicalKeyboardKey.delete) {
-              if (_painterController.selectedObjectDrawable != null) {
-                final selectedDrawable =
-                    _painterController.selectedObjectDrawable!;
-                _painterController.removeDrawable(
-                  selectedDrawable,
-                  newAction: true,
-                );
-                _painterController.deselectObjectDrawable(isRemoved: true);
-                return KeyEventResult.handled;
-              }
-            }
-            return KeyEventResult.ignored;
-          },
           child: Scaffold(
             appBar: PreferredSize(
               preferredSize: const Size.fromHeight(kToolbarHeight),
@@ -981,13 +1082,16 @@ class _ImageEditorScreenState extends State<ImageEditorScreen> {
                         tooltip: l10n.saveAsTooltip,
                       ),
                       const SizedBox(width: 8),
-                      FilledButton.tonalIcon(
-                        icon: const Icon(Icons.content_copy),
-                        label: Text(l10n.copyButtonLabel),
-                        onPressed: _copyToClipboard,
-                        style: FilledButton.styleFrom(
-                          backgroundColor: Colors.green.withValues(alpha: 0.2),
-                          foregroundColor: Colors.green.shade700,
+                      Tooltip(
+                        message: l10n.copyTooltip,
+                        child: FilledButton.tonalIcon(
+                          icon: const Icon(Icons.content_copy),
+                          label: Text(l10n.copyButtonLabel),
+                          onPressed: _copyToClipboard,
+                          style: FilledButton.styleFrom(
+                            backgroundColor: Colors.green.withValues(alpha: 0.2),
+                            foregroundColor: Colors.green.shade700,
+                          ),
                         ),
                       ),
                       const SizedBox(width: 8),
@@ -998,6 +1102,13 @@ class _ImageEditorScreenState extends State<ImageEditorScreen> {
                             ? () => _painterController.undo()
                             : null,
                         tooltip: l10n.undoTooltip,
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.redo),
+                        onPressed: _painterController.canRedo
+                            ? () => _painterController.redo()
+                            : null,
+                        tooltip: l10n.redoTooltip,
                       ),
                       IconButton(
                         icon: const Icon(Icons.delete_sweep),
@@ -1075,9 +1186,11 @@ class _ImageEditorScreenState extends State<ImageEditorScreen> {
                           selectedTool: _selectedTool,
                           selectedColor: _selectedColor,
                           strokeWidth: _strokeWidth,
+                          brushStabilization: _brushStabilization,
                           onToolSelected: _updateTool,
                           onColorChanged: _updateColor,
                           onStrokeWidthChanged: _updateStrokeWidth,
+                          onBrushStabilizationChanged: _updateBrushStabilization,
                           onCropPressed: _enterCropMode,
                           onResizePressed: _showResizeDialog,
                         ),
@@ -1094,7 +1207,7 @@ class _ImageEditorScreenState extends State<ImageEditorScreen> {
                                     ).colorScheme.surfaceContainerLowest,
                                     child: Listener(
                                       onPointerDown: (event) {
-                                        // Detecta quando o botão direito (botão 2) ou botão do meio (botão 4) do mouse é pressionado
+                                        _canvasFocusNode.requestFocus();
                                         if (event.buttons == 2 ||
                                             event.buttons == 4) {
                                           setState(() {
@@ -1209,6 +1322,8 @@ class _ImageEditorScreenState extends State<ImageEditorScreen> {
                                                             child: FlutterPainter(
                                                               controller:
                                                                   _painterController,
+                                                              onDrawableCreated:
+                                                                  _onDrawableCreated,
                                                             ),
                                                           ),
                                                           // Overlay do cursor da borracha
@@ -1318,7 +1433,7 @@ class _ImageEditorScreenState extends State<ImageEditorScreen> {
                                                         .spaceBetween,
                                                 children: [
                                                   Text(
-                                                    'Estilo da Seta',
+                                                    l10n.arrowStyleTitle,
                                                     style: Theme.of(context)
                                                         .textTheme
                                                         .titleSmall
@@ -1341,7 +1456,7 @@ class _ImageEditorScreenState extends State<ImageEditorScreen> {
                                                     padding: EdgeInsets.zero,
                                                     constraints:
                                                         const BoxConstraints(),
-                                                    tooltip: 'Fechar',
+                                                    tooltip: l10n.closeTooltip,
                                                   ),
                                                 ],
                                               ),
@@ -1430,7 +1545,9 @@ class _ImageEditorScreenState extends State<ImageEditorScreen> {
                                                                 ),
                                                                 Text(
                                                                   style
-                                                                      .displayName,
+                                                                      .displayName(
+                                                                    l10n,
+                                                                  ),
                                                                   style: TextStyle(
                                                                     fontWeight:
                                                                         isSelected
@@ -1454,7 +1571,9 @@ class _ImageEditorScreenState extends State<ImageEditorScreen> {
                                                               height: 4,
                                                             ),
                                                             Text(
-                                                              style.description,
+                                                              style.description(
+                                                                l10n,
+                                                              ),
                                                               style: Theme.of(context)
                                                                   .textTheme
                                                                   .bodySmall
@@ -1718,6 +1837,10 @@ class _CopyImageIntent extends Intent {
 
 class _UndoIntent extends Intent {
   const _UndoIntent();
+}
+
+class _RedoIntent extends Intent {
+  const _RedoIntent();
 }
 
 class _DeleteDrawableIntent extends Intent {

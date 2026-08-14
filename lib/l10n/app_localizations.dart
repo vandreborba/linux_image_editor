@@ -541,6 +541,120 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Enter dimensions in pixels. The crop area will be fixed and you can only reposition it.'**
   String get fixedSizeDialogDescription;
+
+  /// No description provided for @redoTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Redo (Ctrl+Shift+Z)'**
+  String get redoTooltip;
+
+  /// No description provided for @copyTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy (Ctrl+C)'**
+  String get copyTooltip;
+
+  /// No description provided for @arrowStyleTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Arrow Style'**
+  String get arrowStyleTitle;
+
+  /// No description provided for @arrowStyleStandard.
+  ///
+  /// In en, this message translates to:
+  /// **'Standard'**
+  String get arrowStyleStandard;
+
+  /// No description provided for @arrowStyleStandardDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Arrow with closed tip'**
+  String get arrowStyleStandardDesc;
+
+  /// No description provided for @arrowStyleWide.
+  ///
+  /// In en, this message translates to:
+  /// **'Wide'**
+  String get arrowStyleWide;
+
+  /// No description provided for @arrowStyleWideDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Arrow with wider tip'**
+  String get arrowStyleWideDesc;
+
+  /// No description provided for @arrowStyleCurved.
+  ///
+  /// In en, this message translates to:
+  /// **'Curved'**
+  String get arrowStyleCurved;
+
+  /// No description provided for @arrowStyleCurvedDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Curved arrow'**
+  String get arrowStyleCurvedDesc;
+
+  /// No description provided for @textStylePlain.
+  ///
+  /// In en, this message translates to:
+  /// **'Plain'**
+  String get textStylePlain;
+
+  /// No description provided for @textStylePlainDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Simple text without effects'**
+  String get textStylePlainDesc;
+
+  /// No description provided for @textStyleShadow.
+  ///
+  /// In en, this message translates to:
+  /// **'Shadow'**
+  String get textStyleShadow;
+
+  /// No description provided for @textStyleShadowDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Text with shadow for emphasis'**
+  String get textStyleShadowDesc;
+
+  /// No description provided for @textStyleRoundedBox.
+  ///
+  /// In en, this message translates to:
+  /// **'Rounded Box'**
+  String get textStyleRoundedBox;
+
+  /// No description provided for @textStyleRoundedBoxDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Text with rounded background for contrast'**
+  String get textStyleRoundedBoxDesc;
+
+  /// No description provided for @stabilizationTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Stabilization: {value}'**
+  String stabilizationTooltip(Object value);
+
+  /// No description provided for @stabilizationTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Brush stabilization'**
+  String get stabilizationTitle;
+
+  /// No description provided for @errorCropImage.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not crop the image'**
+  String get errorCropImage;
+
+  /// No description provided for @xclipNotInstalled.
+  ///
+  /// In en, this message translates to:
+  /// **'xclip is not installed. Install with: sudo apt install xclip'**
+  String get xclipNotInstalled;
 }
 
 class _AppLocalizationsDelegate

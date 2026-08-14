@@ -1,31 +1,31 @@
 import 'package:flutter/material.dart';
+import 'package:linux_image_editor/l10n/app_localizations.dart';
 
 enum TextStyleType { plain, shadow, roundedBox }
 
 extension TextStyleTypeExtension on TextStyleType {
-  String get displayName {
+  String displayName(AppLocalizations l10n) {
     switch (this) {
       case TextStyleType.plain:
-        return 'Simples';
+        return l10n.textStylePlain;
       case TextStyleType.shadow:
-        return 'Com Sombra';
+        return l10n.textStyleShadow;
       case TextStyleType.roundedBox:
-        return 'Caixa Arredondada';
+        return l10n.textStyleRoundedBox;
     }
   }
 
-  String get description {
+  String description(AppLocalizations l10n) {
     switch (this) {
       case TextStyleType.plain:
-        return 'Texto simples sem efeitos';
+        return l10n.textStylePlainDesc;
       case TextStyleType.shadow:
-        return 'Texto com sombra para destaque';
+        return l10n.textStyleShadowDesc;
       case TextStyleType.roundedBox:
-        return 'Texto com fundo arredondado para contraste';
+        return l10n.textStyleRoundedBoxDesc;
     }
   }
 
-  // Configurações visuais para cada estilo
   TextStyleConfig get config {
     switch (this) {
       case TextStyleType.plain:

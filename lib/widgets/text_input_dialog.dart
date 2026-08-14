@@ -137,7 +137,7 @@ class _TextInputDialogState extends State<TextInputDialog> {
                               _buildStyleIcon(styleType),
                               const SizedBox(height: 4),
                               Text(
-                                styleType.displayName,
+                                styleType.displayName(l10n),
                                 style: Theme.of(context).textTheme.bodySmall,
                                 textAlign: TextAlign.center,
                                 maxLines: 2,

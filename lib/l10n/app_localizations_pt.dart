@@ -254,4 +254,65 @@ class AppLocalizationsPt extends AppLocalizations {
   @override
   String get fixedSizeDialogDescription =>
       'Digite as dimensões em pixels. A área de corte será fixa e você poderá apenas reposicioná-la.';
+
+  @override
+  String get redoTooltip => 'Refazer (Ctrl+Shift+Z)';
+
+  @override
+  String get copyTooltip => 'Copiar (Ctrl+C)';
+
+  @override
+  String get arrowStyleTitle => 'Estilo da Seta';
+
+  @override
+  String get arrowStyleStandard => 'Padrão';
+
+  @override
+  String get arrowStyleStandardDesc => 'Seta com ponta fechada';
+
+  @override
+  String get arrowStyleWide => 'Aberta';
+
+  @override
+  String get arrowStyleWideDesc => 'Seta com ponta mais aberta';
+
+  @override
+  String get arrowStyleCurved => 'Curva';
+
+  @override
+  String get arrowStyleCurvedDesc => 'Seta curvada';
+
+  @override
+  String get textStylePlain => 'Simples';
+
+  @override
+  String get textStylePlainDesc => 'Texto simples sem efeitos';
+
+  @override
+  String get textStyleShadow => 'Com Sombra';
+
+  @override
+  String get textStyleShadowDesc => 'Texto com sombra para destaque';
+
+  @override
+  String get textStyleRoundedBox => 'Caixa Arredondada';
+
+  @override
+  String get textStyleRoundedBoxDesc =>
+      'Texto com fundo arredondado para contraste';
+
+  @override
+  String stabilizationTooltip(Object value) {
+    return 'Estabilização: $value';
+  }
+
+  @override
+  String get stabilizationTitle => 'Estabilização do pincel';
+
+  @override
+  String get errorCropImage => 'Não foi possível cortar a imagem';
+
+  @override
+  String get xclipNotInstalled =>
+      'xclip não está instalado. Instale com: sudo apt install xclip';
 }
