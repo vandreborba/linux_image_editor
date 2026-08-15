@@ -43,6 +43,7 @@ rm -rf "$DEB_DIR"
 # Obtém dependências
 echo -e "${YELLOW}📦 Obtendo dependências...${NC}"
 flutter pub get
+flutter gen-l10n
 
 # Compila o aplicativo
 echo -e "${YELLOW}🔨 Compilando aplicativo Flutter...${NC}"
