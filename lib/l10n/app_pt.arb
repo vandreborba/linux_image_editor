@@ -230,5 +230,46 @@
   "errorCropImage": "N\u00e3o foi poss\u00edvel cortar a imagem",
   "@errorCropImage": {},
   "xclipNotInstalled": "xclip n\u00e3o est\u00e1 instalado. Instale com: sudo apt install xclip",
-  "@xclipNotInstalled": {}
+  "@xclipNotInstalled": {},
+  "updateAvailableSnack": "Nova vers\u00e3o dispon\u00edvel: {latestVersion} (voc\u00ea est\u00e1 na {currentVersion})",
+  "@updateAvailableSnack": {
+    "placeholders": {
+      "latestVersion": {},
+      "currentVersion": {}
+    }
+  },
+  "viewReleaseAction": "Ver release",
+  "@viewReleaseAction": {},
+  "updateLaterAction": "Depois",
+  "@updateLaterAction": {},
+  "updateDontNotifyAction": "N\u00e3o avisar novamente",
+  "@updateDontNotifyAction": {},
+  "updateUpToDateSnack": "Voc\u00ea est\u00e1 na vers\u00e3o mais recente ({version})",
+  "@updateUpToDateSnack": {
+    "placeholders": {
+      "version": {}
+    }
+  },
+  "updateCheckFailedSnack": "N\u00e3o foi poss\u00edvel verificar atualiza\u00e7\u00f5es",
+  "@updateCheckFailedSnack": {},
+  "menuCheckUpdates": "Verificar atualiza\u00e7\u00f5es",
+  "@menuCheckUpdates": {},
+  "menuDownloadRelease": "Baixar nova vers\u00e3o",
+  "@menuDownloadRelease": {},
+  "menuAbout": "Sobre",
+  "@menuAbout": {},
+  "aboutDialogTitle": "Sobre",
+  "@aboutDialogTitle": {},
+  "aboutVersionLabel": "Vers\u00e3o {version}",
+  "@aboutVersionLabel": {
+    "placeholders": {
+      "version": {}
+    }
+  },
+  "aboutReleasesLink": "Ver releases no GitHub",
+  "@aboutReleasesLink": {},
+  "aboutReenableNotifications": "Reativar avisos autom\u00e1ticos de atualiza\u00e7\u00e3o",
+  "@aboutReenableNotifications": {},
+  "aboutNotificationsReenabled": "Avisos autom\u00e1ticos de atualiza\u00e7\u00e3o reativados",
+  "@aboutNotificationsReenabled": {}
 }

@@ -231,5 +231,46 @@
   "errorCropImage": "Could not crop the image",
   "@errorCropImage": {},
   "xclipNotInstalled": "xclip is not installed. Install with: sudo apt install xclip",
-  "@xclipNotInstalled": {}
+  "@xclipNotInstalled": {},
+  "updateAvailableSnack": "New version available: {latestVersion} (you are on {currentVersion})",
+  "@updateAvailableSnack": {
+    "placeholders": {
+      "latestVersion": {},
+      "currentVersion": {}
+    }
+  },
+  "viewReleaseAction": "View release",
+  "@viewReleaseAction": {},
+  "updateLaterAction": "Later",
+  "@updateLaterAction": {},
+  "updateDontNotifyAction": "Don't notify again",
+  "@updateDontNotifyAction": {},
+  "updateUpToDateSnack": "You are on the latest version ({version})",
+  "@updateUpToDateSnack": {
+    "placeholders": {
+      "version": {}
+    }
+  },
+  "updateCheckFailedSnack": "Could not check for updates",
+  "@updateCheckFailedSnack": {},
+  "menuCheckUpdates": "Check for updates",
+  "@menuCheckUpdates": {},
+  "menuDownloadRelease": "Download new version",
+  "@menuDownloadRelease": {},
+  "menuAbout": "About",
+  "@menuAbout": {},
+  "aboutDialogTitle": "About",
+  "@aboutDialogTitle": {},
+  "aboutVersionLabel": "Version {version}",
+  "@aboutVersionLabel": {
+    "placeholders": {
+      "version": {}
+    }
+  },
+  "aboutReleasesLink": "View releases on GitHub",
+  "@aboutReleasesLink": {},
+  "aboutReenableNotifications": "Re-enable automatic update notifications",
+  "@aboutReenableNotifications": {},
+  "aboutNotificationsReenabled": "Automatic update notifications re-enabled",
+  "@aboutNotificationsReenabled": {}
 }

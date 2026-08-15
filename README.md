@@ -6,6 +6,9 @@ Editor de imagens leve e rápido para Linux com ferramentas de desenho (pincel, 
 
 ![Flutter](https://img.shields.io/badge/Flutter-Linux-blue)
 ![License](https://img.shields.io/badge/License-GPLv3-blue.svg)
+[![GitHub](https://img.shields.io/badge/GitHub-linux__image__editor-181717?logo=github)](https://github.com/vandreborba/linux_image_editor)
+
+**Repositório:** [github.com/vandreborba/linux_image_editor](https://github.com/vandreborba/linux_image_editor)
 
 [English](#english) | [Português](#português)
 

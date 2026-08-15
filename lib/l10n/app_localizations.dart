@@ -655,6 +655,90 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'xclip is not installed. Install with: sudo apt install xclip'**
   String get xclipNotInstalled;
+
+  /// No description provided for @updateAvailableSnack.
+  ///
+  /// In en, this message translates to:
+  /// **'New version available: {latestVersion} (you are on {currentVersion})'**
+  String updateAvailableSnack(Object latestVersion, Object currentVersion);
+
+  /// No description provided for @viewReleaseAction.
+  ///
+  /// In en, this message translates to:
+  /// **'View release'**
+  String get viewReleaseAction;
+
+  /// No description provided for @updateLaterAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Later'**
+  String get updateLaterAction;
+
+  /// No description provided for @updateDontNotifyAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Don\'t notify again'**
+  String get updateDontNotifyAction;
+
+  /// No description provided for @updateUpToDateSnack.
+  ///
+  /// In en, this message translates to:
+  /// **'You are on the latest version ({version})'**
+  String updateUpToDateSnack(Object version);
+
+  /// No description provided for @updateCheckFailedSnack.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not check for updates'**
+  String get updateCheckFailedSnack;
+
+  /// No description provided for @menuCheckUpdates.
+  ///
+  /// In en, this message translates to:
+  /// **'Check for updates'**
+  String get menuCheckUpdates;
+
+  /// No description provided for @menuDownloadRelease.
+  ///
+  /// In en, this message translates to:
+  /// **'Download new version'**
+  String get menuDownloadRelease;
+
+  /// No description provided for @menuAbout.
+  ///
+  /// In en, this message translates to:
+  /// **'About'**
+  String get menuAbout;
+
+  /// No description provided for @aboutDialogTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'About'**
+  String get aboutDialogTitle;
+
+  /// No description provided for @aboutVersionLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Version {version}'**
+  String aboutVersionLabel(Object version);
+
+  /// No description provided for @aboutReleasesLink.
+  ///
+  /// In en, this message translates to:
+  /// **'View releases on GitHub'**
+  String get aboutReleasesLink;
+
+  /// No description provided for @aboutReenableNotifications.
+  ///
+  /// In en, this message translates to:
+  /// **'Re-enable automatic update notifications'**
+  String get aboutReenableNotifications;
+
+  /// No description provided for @aboutNotificationsReenabled.
+  ///
+  /// In en, this message translates to:
+  /// **'Automatic update notifications re-enabled'**
+  String get aboutNotificationsReenabled;
 }
 
 class _AppLocalizationsDelegate

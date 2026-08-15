@@ -315,4 +315,55 @@ class AppLocalizationsPt extends AppLocalizations {
   @override
   String get xclipNotInstalled =>
       'xclip não está instalado. Instale com: sudo apt install xclip';
+
+  @override
+  String updateAvailableSnack(Object latestVersion, Object currentVersion) {
+    return 'Nova versão disponível: $latestVersion (você está na $currentVersion)';
+  }
+
+  @override
+  String get viewReleaseAction => 'Ver release';
+
+  @override
+  String get updateLaterAction => 'Depois';
+
+  @override
+  String get updateDontNotifyAction => 'Não avisar novamente';
+
+  @override
+  String updateUpToDateSnack(Object version) {
+    return 'Você está na versão mais recente ($version)';
+  }
+
+  @override
+  String get updateCheckFailedSnack =>
+      'Não foi possível verificar atualizações';
+
+  @override
+  String get menuCheckUpdates => 'Verificar atualizações';
+
+  @override
+  String get menuDownloadRelease => 'Baixar nova versão';
+
+  @override
+  String get menuAbout => 'Sobre';
+
+  @override
+  String get aboutDialogTitle => 'Sobre';
+
+  @override
+  String aboutVersionLabel(Object version) {
+    return 'Versão $version';
+  }
+
+  @override
+  String get aboutReleasesLink => 'Ver releases no GitHub';
+
+  @override
+  String get aboutReenableNotifications =>
+      'Reativar avisos automáticos de atualização';
+
+  @override
+  String get aboutNotificationsReenabled =>
+      'Avisos automáticos de atualização reativados';
 }

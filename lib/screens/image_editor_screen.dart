@@ -12,6 +12,7 @@ import 'package:crop_your_image/crop_your_image.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:window_manager/window_manager.dart';
 import 'package:image/image.dart' as img;
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:linux_image_editor/l10n/app_localizations.dart';
 import '../models/editor_tool.dart';
 import '../models/editor_mode.dart';
@@ -23,7 +24,13 @@ import '../drawables/rounded_box_text_drawable.dart';
 import '../widgets/toolbar.dart';
 import '../widgets/text_input_dialog.dart';
 import '../widgets/resize_dialog.dart';
+import '../widgets/about_dialog.dart';
+import '../services/update_service.dart';
 import '../utils/path_smoother.dart';
+
+const String _appMenuCheckUpdates = 'check_updates';
+const String _appMenuDownloadRelease = 'download_release';
+const String _appMenuAbout = 'about';
 
 class ImageEditorScreen extends StatefulWidget {
   final String? initialFilePath;
@@ -70,6 +77,8 @@ class _ImageEditorScreenState extends State<ImageEditorScreen> {
   double? _selectedAspectRatio;
   Rect? _fixedCropSize;
 
+  final UpdateService _updateService = UpdateService();
+
   @override
   void initState() {
     super.initState();
@@ -82,6 +91,12 @@ class _ImageEditorScreenState extends State<ImageEditorScreen> {
       } else {
         _loadImageFromClipboard();
       }
+
+      Future.delayed(const Duration(seconds: 3), () {
+        if (mounted) {
+          _checkForUpdatesAutomatic();
+        }
+      });
     });
   }
 
@@ -183,6 +198,10 @@ class _ImageEditorScreenState extends State<ImageEditorScreen> {
       if (_painterController.canUndo) {
         _painterController.undo();
       }
+      return true;
+    }
+    if (isCtrl && isShift && key == LogicalKeyboardKey.keyU) {
+      _checkForUpdatesManual();
       return true;
     }
     if (key == LogicalKeyboardKey.delete ||
@@ -853,6 +872,107 @@ class _ImageEditorScreenState extends State<ImageEditorScreen> {
     );
   }
 
+  Future<void> _checkForUpdatesAutomatic() async {
+    final result = await _updateService.checkForUpdate();
+    if (!mounted || result.networkError) return;
+
+    if (await _updateService.shouldShowAutomaticNotification(result)) {
+      _showUpdateAvailableSnackBar(result, showDontNotify: true);
+    }
+  }
+
+  Future<void> _checkForUpdatesManual() async {
+    final l10n = AppLocalizations.of(context)!;
+    final result = await _updateService.checkForUpdate();
+    if (!mounted) return;
+
+    if (result.networkError) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(l10n.updateCheckFailedSnack),
+          behavior: SnackBarBehavior.floating,
+          duration: const Duration(seconds: 4),
+        ),
+      );
+      return;
+    }
+
+    if (result.hasUpdate) {
+      _showUpdateAvailableSnackBar(result, showDontNotify: false);
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(l10n.updateUpToDateSnack(result.currentVersion)),
+          behavior: SnackBarBehavior.floating,
+          duration: const Duration(seconds: 4),
+        ),
+      );
+    }
+  }
+
+  void _showUpdateAvailableSnackBar(
+    UpdateCheckResult result, {
+    required bool showDontNotify,
+  }) {
+    final l10n = AppLocalizations.of(context)!;
+    final latestVersion = result.latestVersion ?? '';
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              l10n.updateAvailableSnack(latestVersion, result.currentVersion),
+            ),
+            const SizedBox(height: 4),
+            Wrap(
+              spacing: 4,
+              children: [
+                TextButton(
+                  onPressed: () {
+                    ScaffoldMessenger.of(context).hideCurrentSnackBar();
+                    openReleasesPage();
+                  },
+                  child: Text(l10n.viewReleaseAction),
+                ),
+                TextButton(
+                  onPressed: () {
+                    ScaffoldMessenger.of(context).hideCurrentSnackBar();
+                    _updateService.dismissForVersion(latestVersion);
+                  },
+                  child: Text(l10n.updateLaterAction),
+                ),
+                if (showDontNotify)
+                  TextButton(
+                    onPressed: () {
+                      ScaffoldMessenger.of(context).hideCurrentSnackBar();
+                      _updateService.disableNotifications();
+                    },
+                    child: Text(l10n.updateDontNotifyAction),
+                  ),
+              ],
+            ),
+          ],
+        ),
+        behavior: SnackBarBehavior.floating,
+        duration: const Duration(seconds: 8),
+      ),
+    );
+  }
+
+  Future<void> _showAbout() async {
+    final packageInfo = await PackageInfo.fromPlatform();
+    if (!mounted) return;
+
+    await showAppAboutDialog(
+      context: context,
+      version: packageInfo.version,
+      updateService: _updateService,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
@@ -881,6 +1001,11 @@ class _ImageEditorScreenState extends State<ImageEditorScreen> {
         LogicalKeySet(LogicalKeyboardKey.delete): const _DeleteDrawableIntent(),
         LogicalKeySet(LogicalKeyboardKey.backspace):
             const _DeleteDrawableIntent(),
+        LogicalKeySet(
+          LogicalKeyboardKey.control,
+          LogicalKeyboardKey.shift,
+          LogicalKeyboardKey.keyU,
+        ): const _CheckUpdatesIntent(),
       },
       child: Actions(
         actions: <Type, Action<Intent>>{
@@ -918,6 +1043,12 @@ class _ImageEditorScreenState extends State<ImageEditorScreen> {
           _DeleteDrawableIntent: CallbackAction<_DeleteDrawableIntent>(
             onInvoke: (_) {
               _deleteSelectedDrawable();
+              return null;
+            },
+          ),
+          _CheckUpdatesIntent: CallbackAction<_CheckUpdatesIntent>(
+            onInvoke: (_) {
+              _checkForUpdatesManual();
               return null;
             },
           ),
@@ -1117,6 +1248,37 @@ class _ImageEditorScreenState extends State<ImageEditorScreen> {
                       ),
                     ],
                     const SizedBox(width: 8),
+                    PopupMenuButton<String>(
+                      icon: const Icon(Icons.more_vert),
+                      tooltip: l10n.menuAbout,
+                      onSelected: (value) {
+                        switch (value) {
+                          case _appMenuCheckUpdates:
+                            _checkForUpdatesManual();
+                            break;
+                          case _appMenuDownloadRelease:
+                            openReleasesPage();
+                            break;
+                          case _appMenuAbout:
+                            _showAbout();
+                            break;
+                        }
+                      },
+                      itemBuilder: (context) => [
+                        PopupMenuItem(
+                          value: _appMenuCheckUpdates,
+                          child: Text(l10n.menuCheckUpdates),
+                        ),
+                        PopupMenuItem(
+                          value: _appMenuDownloadRelease,
+                          child: Text(l10n.menuDownloadRelease),
+                        ),
+                        PopupMenuItem(
+                          value: _appMenuAbout,
+                          child: Text(l10n.menuAbout),
+                        ),
+                      ],
+                    ),
                     // Botão fechar
                     IconButton(
                       icon: const Icon(Icons.close),
@@ -1845,4 +2007,8 @@ class _RedoIntent extends Intent {
 
 class _DeleteDrawableIntent extends Intent {
   const _DeleteDrawableIntent();
+}
+
+class _CheckUpdatesIntent extends Intent {
+  const _CheckUpdatesIntent();
 }

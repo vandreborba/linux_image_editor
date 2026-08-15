@@ -42,7 +42,8 @@ jobs:
           }
 
           $versionLine = Select-String -Path pubspec.yaml -Pattern '^version:\s*(\S+)' | Select-Object -First 1
-          $version = if ($versionLine) { $versionLine.Matches[0].Groups[1].Value } else { "dev" }
+          $fullVersion = if ($versionLine) { $versionLine.Matches[0].Groups[1].Value } else { "dev" }
+          $version = if ($fullVersion -match '^([^+]+)') { $Matches[1] } else { $fullVersion }
           $zipName = "linux-image-editor_windows_${version}.zip"
 
           if (Test-Path $zipName) { Remove-Item $zipName -Force }

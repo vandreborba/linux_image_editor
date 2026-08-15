@@ -3,6 +3,7 @@
 #
 # Uso:
 #   bash .sh/build-windows.sh
+#   bash .sh/build-windows.sh --no-prompt   # sem avisos de git (uso pelo release.sh)
 #
 # Requisitos:
 #   - gh autenticado (gh auth login)
@@ -17,10 +18,20 @@ set -e
 
 export PATH="$HOME/flutter/bin:$PATH"
 
+NO_PROMPT=0
+for arg in "$@"; do
+    if [[ "$arg" == "--no-prompt" ]]; then
+        NO_PROMPT=1
+    fi
+done
+
 # ---------------------------------------------------------------------------
 # Configuração
 # ---------------------------------------------------------------------------
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && cd .. && pwd)"
+# shellcheck source=.sh/lib/version.sh
+source "$SCRIPT_DIR/.sh/lib/version.sh"
+
 GITHUB_REPO="vandreborba/linux_image_editor"
 GITHUB_BRANCH="main"
 WORKFLOW_NAME="Build Windows"
@@ -40,12 +51,15 @@ echo -e "${BLUE}=========================================${NC}"
 echo -e "${BLUE}   Linux Image Editor - Build Windows${NC}"
 echo -e "${BLUE}=========================================${NC}"
 echo ""
-echo -e "${YELLOW}╔══════════════════════════════════════════════════════════════════╗${NC}"
-echo -e "${YELLOW}║  AVISO: faça commit e push antes de compilar!                    ║${NC}"
-echo -e "${YELLOW}║                                                                  ║${NC}"
-echo -e "${YELLOW}║  O build Windows roda no GitHub com o código do último push.     ║${NC}"
-echo -e "${YELLOW}╚══════════════════════════════════════════════════════════════════╝${NC}"
-echo ""
+
+if [[ "$NO_PROMPT" -eq 0 ]]; then
+    echo -e "${YELLOW}╔══════════════════════════════════════════════════════════════════╗${NC}"
+    echo -e "${YELLOW}║  AVISO: faça commit e push antes de compilar!                    ║${NC}"
+    echo -e "${YELLOW}║                                                                  ║${NC}"
+    echo -e "${YELLOW}║  O build Windows roda no GitHub com o código do último push.     ║${NC}"
+    echo -e "${YELLOW}╚══════════════════════════════════════════════════════════════════╝${NC}"
+    echo ""
+fi
 
 cd "$SCRIPT_DIR"
 
@@ -54,28 +68,30 @@ if ! git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
     exit 1
 fi
 
-PENDING_CHANGES=$(git status --porcelain)
-if [ -n "$PENDING_CHANGES" ]; then
-    echo -e "${YELLOW}Alterações pendentes detectadas:${NC}"
-    echo "$PENDING_CHANGES"
-    echo ""
-    echo "Sugestão:"
-    echo "  git add -A"
-    echo "  git commit -m \"Sua mensagem\""
-    echo "  git push origin $GITHUB_BRANCH"
-    echo ""
-    read -r -p "Continuar mesmo assim? [s/N] " ANSWER
-    if [[ ! "$ANSWER" =~ ^[sS]$ ]]; then
-        echo "Compilação cancelada."
-        exit 1
+if [[ "$NO_PROMPT" -eq 0 ]]; then
+    PENDING_CHANGES=$(git status --porcelain)
+    if [ -n "$PENDING_CHANGES" ]; then
+        echo -e "${YELLOW}Alterações pendentes detectadas:${NC}"
+        echo "$PENDING_CHANGES"
+        echo ""
+        echo "Sugestão:"
+        echo "  git add -A"
+        echo "  git commit -m \"Sua mensagem\""
+        echo "  git push origin $GITHUB_BRANCH"
+        echo ""
+        read -r -p "Continuar mesmo assim? [s/N] " ANSWER
+        if [[ ! "$ANSWER" =~ ^[sS]$ ]]; then
+            echo "Compilação cancelada."
+            exit 1
+        fi
+        echo ""
+    else
+        echo -e "${GREEN}✓ Working tree limpo — pronto para compilar.${NC}"
+        echo ""
     fi
-    echo ""
-else
-    echo -e "${GREEN}✓ Working tree limpo — pronto para compilar.${NC}"
-    echo ""
 fi
 
-VERSION=$(grep -oP '^version:\s*\K\S+' pubspec.yaml || true)
+VERSION="$(get_app_version)"
 if [ -z "$VERSION" ]; then
     VERSION="dev"
     echo -e "${YELLOW}AVISO: versão não encontrada no pubspec. Usando sufixo 'dev'.${NC}"
@@ -165,7 +181,7 @@ if gh run watch "$RUN_ID" --repo "$GITHUB_REPO" --exit-status; then
             echo "  2. Execute o .exe na pasta extraída"
             echo ""
 
-            if command -v xdg-open >/dev/null 2>&1; then
+            if [[ "$NO_PROMPT" -eq 0 ]] && command -v xdg-open >/dev/null 2>&1; then
                 xdg-open "$OUTPUT_DIR" >/dev/null 2>&1 || true
             fi
         else

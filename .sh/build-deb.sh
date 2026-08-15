@@ -5,6 +5,10 @@
 
 set -e
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && cd .. && pwd)"
+# shellcheck source=.sh/lib/version.sh
+source "$SCRIPT_DIR/.sh/lib/version.sh"
+
 # Cores para output
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -15,13 +19,12 @@ NC='\033[0m' # No Color
 # Informações do pacote
 APP_NAME="linux-image-editor"
 APP_DISPLAY_NAME="Linux Image Editor"
-APP_VERSION="1.2.1"
+APP_VERSION="$(get_app_version)"
 APP_DESCRIPTION="Editor de imagens rápido para Linux"
 APP_MAINTAINER="Vandre Borba <vandre@example.com>"
 APP_HOMEPAGE="https://github.com/vandreborba/linux_image_editor"
 
 # Diretórios
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && cd .. && pwd)"
 BUILD_DIR="$SCRIPT_DIR/build"
 DEB_DIR="$BUILD_DIR/deb"
 DEB_PKG_DIR="$DEB_DIR/${APP_NAME}_${APP_VERSION}_amd64"
@@ -289,10 +292,11 @@ if [ -f "$DEB_FILE" ]; then
     echo -e "  ${BLUE}→ $(basename "$DEB_FILE")${NC}"
     echo -e "  ${BLUE}→ set-default.sh${NC}"
     
-    # Abre a pasta do .deb no gerenciador de arquivos
-    echo ""
-    echo -e "${YELLOW}Abrindo pasta do pacote...${NC}"
-    xdg-open "$DEB_DIR" 2>/dev/null || true
+    if [[ "${SKIP_OPEN_FOLDER:-}" != "1" ]]; then
+        echo ""
+        echo -e "${YELLOW}Abrindo pasta do pacote...${NC}"
+        xdg-open "$DEB_DIR" 2>/dev/null || true
+    fi
 else
     echo -e "${RED}❌ Erro ao criar pacote .deb${NC}"
     exit 1

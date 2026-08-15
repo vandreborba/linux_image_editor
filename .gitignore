@@ -43,3 +43,7 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Release binaries (generated locally by .sh/release.sh)
+release/*.deb
+release/windows/*.zip
