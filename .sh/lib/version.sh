@@ -77,3 +77,8 @@ compute_bumped_version() {
     new_build="$(bump_build_number "$current_build")"
     echo "${new_semver}+${new_build}"
 }
+
+# Valida formato semver X.Y.Z
+is_valid_semver() {
+    [[ "$1" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]
+}

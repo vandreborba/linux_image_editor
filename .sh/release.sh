@@ -2,7 +2,8 @@
 # Release unificado: bump de versão, build Linux, build Windows (GitHub) e publicação.
 #
 # Uso:
-#   bash .sh/release.sh
+#   bash .sh/release.sh              # patch automático ou versão digitada
+#   bash .sh/release.sh 1.3.0        # versão manual (build number +1)
 #
 # Requisitos:
 #   - Flutter instalado
@@ -52,17 +53,52 @@ if ! gh auth status >/dev/null 2>&1; then
 fi
 
 # ---------------------------------------------------------------------------
-# Bump automático de versão
+# Versão: patch automático ou manual
 # ---------------------------------------------------------------------------
 CURRENT_FULL="$(get_pubspec_version_line)"
 CURRENT_SEMVER="$(get_app_version "$CURRENT_FULL")"
 CURRENT_BUILD="$(get_build_number "$CURRENT_FULL")"
-NEW_SEMVER="$(bump_version_patch "$CURRENT_SEMVER")"
+AUTO_SEMVER="$(bump_version_patch "$CURRENT_SEMVER")"
 NEW_BUILD="$(bump_build_number "$CURRENT_BUILD")"
+NEW_SEMVER="$AUTO_SEMVER"
+
+echo -e "${BLUE}Versão atual:${NC}     $CURRENT_FULL"
+echo -e "${BLUE}Sugestão (patch):${NC} ${AUTO_SEMVER}+${NEW_BUILD}"
+echo ""
+
+if [[ -n "${1:-}" ]]; then
+    if ! is_valid_semver "$1"; then
+        echo -e "${RED}ERRO: versão inválida '$1'. Use o formato X.Y.Z (ex: 1.3.0)${NC}"
+        exit 1
+    fi
+    NEW_SEMVER="$1"
+    echo -e "${GREEN}Versão manual via argumento: $NEW_SEMVER+${NEW_BUILD}${NC}"
+    echo ""
+else
+    echo "Opções:"
+    echo "  [Enter]  usar patch automático (${AUTO_SEMVER})"
+    echo "  1.3.0    digitar versão manual (semver)"
+    echo "  n        cancelar"
+    echo ""
+    read -r -p "Nova versão: " VERSION_INPUT
+
+    if [[ "$VERSION_INPUT" =~ ^[nN]$ ]]; then
+        echo "Release cancelada."
+        exit 0
+    fi
+
+    if [[ -n "$VERSION_INPUT" ]]; then
+        if ! is_valid_semver "$VERSION_INPUT"; then
+            echo -e "${RED}ERRO: versão inválida '$VERSION_INPUT'. Use o formato X.Y.Z (ex: 1.3.0)${NC}"
+            exit 1
+        fi
+        NEW_SEMVER="$VERSION_INPUT"
+    fi
+fi
+
 NEW_FULL="${NEW_SEMVER}+${NEW_BUILD}"
 
-echo -e "${BLUE}Versão atual:${NC}  $CURRENT_FULL"
-echo -e "${BLUE}Nova versão:${NC}   $NEW_FULL  (patch automático)"
+echo -e "${BLUE}Versão da release:${NC} $NEW_FULL"
 echo ""
 read -r -p "Continuar com a release? [S/n] " CONFIRM
 if [[ ! "$CONFIRM" =~ ^[sS]?$ ]] && [[ -n "$CONFIRM" ]]; then

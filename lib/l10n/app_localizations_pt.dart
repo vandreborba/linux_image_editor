@@ -343,9 +343,6 @@ class AppLocalizationsPt extends AppLocalizations {
   String get menuCheckUpdates => 'Verificar atualizações';
 
   @override
-  String get menuDownloadRelease => 'Baixar nova versão';
-
-  @override
   String get menuAbout => 'Sobre';
 
   @override
@@ -366,4 +363,25 @@ class AppLocalizationsPt extends AppLocalizations {
   @override
   String get aboutNotificationsReenabled =>
       'Avisos automáticos de atualização reativados';
+
+  @override
+  String get menuSetDefault => 'Definir como visualizador padrão';
+
+  @override
+  String get setDefaultDialogTitle => 'Definir como visualizador padrão';
+
+  @override
+  String get setDefaultDialogMessage =>
+      'Configurar o Linux Image Editor como aplicativo padrão para abrir imagens?';
+
+  @override
+  String get setDefaultSuccess =>
+      'Linux Image Editor definido como visualizador padrão de imagens';
+
+  @override
+  String get setDefaultNotInstalled =>
+      'App não instalado via .deb. Instale primeiro para usar esta opção.';
+
+  @override
+  String get setDefaultFailed => 'Não foi possível definir como padrão';
 }

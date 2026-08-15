@@ -2,21 +2,25 @@
 
 Um comando cria bump de versão, build Linux, build Windows e publica a release no GitHub.
 
-## Release automática
+## Release
 
 ```bash
-bash .sh/release.sh
+bash .sh/release.sh           # patch automático ou versão digitada
+bash .sh/release.sh 1.3.0     # versão manual direto
 ```
 
 O script vai:
 
-1. Incrementar a versão automaticamente (patch + build number) no `pubspec.yaml`
-   - Exemplo: `1.0.0+6` → `1.0.1+7`
-2. Pedir confirmação (`[S/n]`)
-3. Commitar alterações de código + versão e fazer push em `main`
-4. Compilar o pacote `.deb` localmente
-5. Disparar o build Windows no GitHub Actions e aguardar (~10–15 min)
-6. Criar a release no GitHub com:
+1. Mostrar versão atual e sugestão (patch automático)
+2. Permitir escolher a versão:
+   - **Enter** → patch automático (ex: `1.0.0+6` → `1.0.1+7`)
+   - **Digitar** `1.3.0` → versão manual (build number sempre +1)
+   - **n** → cancelar
+3. Pedir confirmação final (`[S/n]`)
+4. Commitar alterações de código + versão e fazer push em `main`
+5. Compilar o pacote `.deb` localmente
+6. Disparar o build Windows no GitHub Actions e aguardar (~10–15 min)
+7. Criar a release no GitHub com:
    - `linux-image-editor_X.Y.Z_amd64.deb`
    - `linux-image-editor_windows_X.Y.Z.zip`
    - `set-default.sh`
@@ -49,7 +53,7 @@ bash .sh/build-windows.sh
 
 - Fonte única: `pubspec.yaml` (`version: X.Y.Z+N`)
 - Tag da release: `vX.Y.Z` (sem build number)
-- O `release.sh` incrementa sempre o patch (`+0.0.1`) e o build number (`+1`)
+- O `release.sh` aceita patch automático ou versão manual; build number sempre incrementa (+1)
 
 ## Binários no git
 

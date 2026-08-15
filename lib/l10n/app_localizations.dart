@@ -698,12 +698,6 @@ abstract class AppLocalizations {
   /// **'Check for updates'**
   String get menuCheckUpdates;
 
-  /// No description provided for @menuDownloadRelease.
-  ///
-  /// In en, this message translates to:
-  /// **'Download new version'**
-  String get menuDownloadRelease;
-
   /// No description provided for @menuAbout.
   ///
   /// In en, this message translates to:
@@ -739,6 +733,42 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Automatic update notifications re-enabled'**
   String get aboutNotificationsReenabled;
+
+  /// No description provided for @menuSetDefault.
+  ///
+  /// In en, this message translates to:
+  /// **'Set as default image viewer'**
+  String get menuSetDefault;
+
+  /// No description provided for @setDefaultDialogTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Set as default image viewer'**
+  String get setDefaultDialogTitle;
+
+  /// No description provided for @setDefaultDialogMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Configure Linux Image Editor as the default application for opening images?'**
+  String get setDefaultDialogMessage;
+
+  /// No description provided for @setDefaultSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Linux Image Editor is now the default image viewer'**
+  String get setDefaultSuccess;
+
+  /// No description provided for @setDefaultNotInstalled.
+  ///
+  /// In en, this message translates to:
+  /// **'App not installed via .deb. Install first to use this option.'**
+  String get setDefaultNotInstalled;
+
+  /// No description provided for @setDefaultFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not set as default application'**
+  String get setDefaultFailed;
 }
 
 class _AppLocalizationsDelegate

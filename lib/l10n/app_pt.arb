@@ -254,8 +254,6 @@
   "@updateCheckFailedSnack": {},
   "menuCheckUpdates": "Verificar atualiza\u00e7\u00f5es",
   "@menuCheckUpdates": {},
-  "menuDownloadRelease": "Baixar nova vers\u00e3o",
-  "@menuDownloadRelease": {},
   "menuAbout": "Sobre",
   "@menuAbout": {},
   "aboutDialogTitle": "Sobre",
@@ -271,5 +269,17 @@
   "aboutReenableNotifications": "Reativar avisos autom\u00e1ticos de atualiza\u00e7\u00e3o",
   "@aboutReenableNotifications": {},
   "aboutNotificationsReenabled": "Avisos autom\u00e1ticos de atualiza\u00e7\u00e3o reativados",
-  "@aboutNotificationsReenabled": {}
+  "@aboutNotificationsReenabled": {},
+  "menuSetDefault": "Definir como visualizador padr\u00e3o",
+  "@menuSetDefault": {},
+  "setDefaultDialogTitle": "Definir como visualizador padr\u00e3o",
+  "@setDefaultDialogTitle": {},
+  "setDefaultDialogMessage": "Configurar o Linux Image Editor como aplicativo padr\u00e3o para abrir imagens?",
+  "@setDefaultDialogMessage": {},
+  "setDefaultSuccess": "Linux Image Editor definido como visualizador padr\u00e3o de imagens",
+  "@setDefaultSuccess": {},
+  "setDefaultNotInstalled": "App n\u00e3o instalado via .deb. Instale primeiro para usar esta op\u00e7\u00e3o.",
+  "@setDefaultNotInstalled": {},
+  "setDefaultFailed": "N\u00e3o foi poss\u00edvel definir como padr\u00e3o",
+  "@setDefaultFailed": {}
 }

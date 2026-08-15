@@ -26,10 +26,11 @@ import '../widgets/text_input_dialog.dart';
 import '../widgets/resize_dialog.dart';
 import '../widgets/about_dialog.dart';
 import '../services/update_service.dart';
+import '../services/default_app_service.dart';
 import '../utils/path_smoother.dart';
 
 const String _appMenuCheckUpdates = 'check_updates';
-const String _appMenuDownloadRelease = 'download_release';
+const String _appMenuSetDefault = 'set_default';
 const String _appMenuAbout = 'about';
 
 class ImageEditorScreen extends StatefulWidget {
@@ -78,6 +79,7 @@ class _ImageEditorScreenState extends State<ImageEditorScreen> {
   Rect? _fixedCropSize;
 
   final UpdateService _updateService = UpdateService();
+  final DefaultAppService _defaultAppService = DefaultAppService();
 
   @override
   void initState() {
@@ -973,6 +975,46 @@ class _ImageEditorScreenState extends State<ImageEditorScreen> {
     );
   }
 
+  Future<void> _setAsDefaultImageViewer() async {
+    final l10n = AppLocalizations.of(context)!;
+
+    if (!await _defaultAppService.isInstalled()) {
+      _showError(l10n.setDefaultNotInstalled);
+      return;
+    }
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text(l10n.setDefaultDialogTitle),
+        content: Text(l10n.setDefaultDialogMessage),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: Text(l10n.cancelButtonLabel),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: Text(l10n.applyButtonLabel),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true || !mounted) return;
+
+    final result = await _defaultAppService.setAsDefaultImageViewer();
+    if (!mounted) return;
+
+    if (result.success) {
+      _showSuccess(l10n.setDefaultSuccess);
+    } else if (result.errorMessage == 'not_installed') {
+      _showError(l10n.setDefaultNotInstalled);
+    } else {
+      _showError(l10n.setDefaultFailed);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
@@ -1256,8 +1298,8 @@ class _ImageEditorScreenState extends State<ImageEditorScreen> {
                           case _appMenuCheckUpdates:
                             _checkForUpdatesManual();
                             break;
-                          case _appMenuDownloadRelease:
-                            openReleasesPage();
+                          case _appMenuSetDefault:
+                            _setAsDefaultImageViewer();
                             break;
                           case _appMenuAbout:
                             _showAbout();
@@ -1269,10 +1311,11 @@ class _ImageEditorScreenState extends State<ImageEditorScreen> {
                           value: _appMenuCheckUpdates,
                           child: Text(l10n.menuCheckUpdates),
                         ),
-                        PopupMenuItem(
-                          value: _appMenuDownloadRelease,
-                          child: Text(l10n.menuDownloadRelease),
-                        ),
+                        if (Platform.isLinux)
+                          PopupMenuItem(
+                            value: _appMenuSetDefault,
+                            child: Text(l10n.menuSetDefault),
+                          ),
                         PopupMenuItem(
                           value: _appMenuAbout,
                           child: Text(l10n.menuAbout),

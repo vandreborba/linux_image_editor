@@ -255,8 +255,6 @@
   "@updateCheckFailedSnack": {},
   "menuCheckUpdates": "Check for updates",
   "@menuCheckUpdates": {},
-  "menuDownloadRelease": "Download new version",
-  "@menuDownloadRelease": {},
   "menuAbout": "About",
   "@menuAbout": {},
   "aboutDialogTitle": "About",
@@ -272,5 +270,17 @@
   "aboutReenableNotifications": "Re-enable automatic update notifications",
   "@aboutReenableNotifications": {},
   "aboutNotificationsReenabled": "Automatic update notifications re-enabled",
-  "@aboutNotificationsReenabled": {}
+  "@aboutNotificationsReenabled": {},
+  "menuSetDefault": "Set as default image viewer",
+  "@menuSetDefault": {},
+  "setDefaultDialogTitle": "Set as default image viewer",
+  "@setDefaultDialogTitle": {},
+  "setDefaultDialogMessage": "Configure Linux Image Editor as the default application for opening images?",
+  "@setDefaultDialogMessage": {},
+  "setDefaultSuccess": "Linux Image Editor is now the default image viewer",
+  "@setDefaultSuccess": {},
+  "setDefaultNotInstalled": "App not installed via .deb. Install first to use this option.",
+  "@setDefaultNotInstalled": {},
+  "setDefaultFailed": "Could not set as default application",
+  "@setDefaultFailed": {}
 }
