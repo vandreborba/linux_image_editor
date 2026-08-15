@@ -29,24 +29,38 @@ BUILD_DIR="$SCRIPT_DIR/build"
 DEB_DIR="$BUILD_DIR/deb"
 DEB_PKG_DIR="$DEB_DIR/${APP_NAME}_${APP_VERSION}_amd64"
 
+# Garante .dart_tool e l10n antes do build (evita race após clean).
+ensure_flutter_ready() {
+    if [[ ! -f "$SCRIPT_DIR/.dart_tool/package_graph.json" ]]; then
+        flutter pub get
+    fi
+    if [[ ! -f "$SCRIPT_DIR/lib/l10n/app_localizations.dart" ]]; then
+        flutter gen-l10n
+    fi
+    if [[ ! -f "$SCRIPT_DIR/.dart_tool/package_graph.json" ]]; then
+        echo -e "${RED}❌ Erro: package_graph.json não encontrado após pub get${NC}"
+        exit 1
+    fi
+}
+
 echo -e "${BLUE}=========================================${NC}"
 echo -e "${BLUE}   Linux Image Editor - Build .deb${NC}"
 echo -e "${BLUE}=========================================${NC}"
 echo ""
 
-# Limpa build anterior
+# Limpa output anterior (sem flutter clean — evita apagar .dart_tool)
 echo -e "${YELLOW}🧹 Limpando builds anteriores...${NC}"
 cd "$SCRIPT_DIR"
-flutter clean
-rm -rf "$DEB_DIR"
+rm -rf "$BUILD_DIR/linux" "$DEB_DIR"
 
 # Obtém dependências
 echo -e "${YELLOW}📦 Obtendo dependências...${NC}"
 flutter pub get
-flutter gen-l10n
+ensure_flutter_ready
 
 # Compila o aplicativo
 echo -e "${YELLOW}🔨 Compilando aplicativo Flutter...${NC}"
+ensure_flutter_ready
 flutter build linux --release
 
 # Verifica se a compilação foi bem-sucedida
